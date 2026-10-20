@@ -1,0 +1,25 @@
+/* ============================================================================
+   KADIS — top bar on phones
+   The bar has a fixed height (38px), so on a phone the text wraps onto extra
+   lines and the bottom line gets hidden under the menu. On screens 600px wide
+   or less, let the bar grow to fit and centre its text.
+   Desktop and tablet are NOT affected (nothing here applies above 600px).
+   Linked from every page that has a top bar: <link rel="stylesheet" href="topbar-mobile.css">
+   ============================================================================ */
+@media (max-width: 600px) {
+  .topbar .wrap {
+    height: auto;
+    min-height: 38px;
+    padding: 7px 16px;
+    justify-content: center;
+    text-align: center;
+    row-gap: 3px;
+    column-gap: 14px;
+    line-height: 1.45;
+  }
+  .topbar-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px 14px;
+  }
+}

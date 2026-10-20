@@ -1,0 +1,428 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Notes — KADIS ICT & Engineering Solutions</title>
+    <!-- FIX 1: the static description and canonical were removed on purpose.
+         renderPost() below sets the real ones for each article. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0C0B09;
+            --ink-2: #131210;
+            --ink-3: #1B1916;
+            --paper: #EFEAE0;
+            --paper-dim: #A79C89;
+            --paper-dimmer: #6B6255;
+            --rule: rgba(239, 234, 224, 0.10);
+            --rule-strong: rgba(239, 234, 224, 0.20);
+            --amber: #D9772E;
+            --amber-soft: #E8A15E;
+            --bg: var(--ink);
+            --bg-2: var(--ink-2);
+            --bg-3: var(--ink-3);
+            --line: var(--rule);
+            --line-bright: var(--rule-strong);
+            --ink-dim: var(--paper-dim);
+            --ink-dimmer: var(--paper-dimmer);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { background: var(--bg); color: var(--paper); font-family: 'Source Serif 4', serif; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; color: inherit; }
+        ::selection { background: var(--amber-soft); color: #161310; }
+        .wrap { max-width: 980px; margin: 0 auto; padding: 0 32px; }
+
+        /* ---------- Nav ---------- */
+        nav { border-bottom: 1px solid var(--rule); padding: 18px 0; background: var(--bg); }
+        .nav-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .logo { display: inline-flex; align-items: center; }
+        .nav-links { display: flex; align-items: center; flex-wrap: wrap; row-gap: 10px; column-gap: 20px; flex: 1; min-width: 0; font-family: 'Manrope', sans-serif; font-size: 13.5px; font-weight: 600; color: var(--ink-dim); margin-left: 20px; }
+        .nav-links a { position: relative; display: inline-flex; align-items: center; padding: 8px 0; white-space: nowrap; transition: color .2s; }
+        .nav-links a:hover { color: white; }
+        .nav-links a::after { content: ''; position: absolute; left: 0; bottom: 0; width: 0; height: 2px; background: var(--amber); transition: width .3s cubic-bezier(.16, .8, .24, 1); }
+        .nav-links a:hover::after { width: 100%; }
+
+        /* ---------- Article ---------- */
+        .article { max-width: 720px; margin: 0 auto; padding: 56px 32px 40px; }
+        .crumbs { font-family: 'Manrope', sans-serif; font-size: 12.5px; color: var(--paper-dimmer); margin-bottom: 30px; }
+        .crumbs a { color: var(--paper-dim); transition: color .2s; }
+        .crumbs a:hover { color: var(--amber-soft); }
+        .crumbs span { margin: 0 8px; }
+        .cat { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--amber-soft); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 14px; }
+        .cat a:hover { text-decoration: underline; }
+        .article h1 { font-family: 'Fraunces', serif; font-weight: 500; font-size: clamp(30px, 5vw, 46px); line-height: 1.12; letter-spacing: -0.01em; margin-bottom: 18px; }
+        .dek { font-size: 18px; line-height: 1.7; color: rgb(213, 209, 209); margin-bottom: 14px; }
+        .meta { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--paper-dimmer); margin-bottom: 34px; }
+
+        .article figure { margin: 0 0 38px; border: 1px solid var(--rule-strong); border-radius: 4px; background: var(--ink-2); overflow: hidden; aspect-ratio: 16/9; }
+        .article figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .article figure.img-missing { display: none; }
+
+        .body p { font-size: 17px; line-height: 1.82; color: var(--paper); margin-bottom: 24px; white-space: pre-line; }
+        .body p.lede::first-letter { font-family: 'Fraunces', serif; font-weight: 500; font-size: 64px; float: left; line-height: 0.8; margin: 6px 10px 0 0; color: var(--amber-soft); }
+        .body h4 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 22px; margin: 38px 0 14px; line-height: 1.25; }
+        .body .pull-quote { margin: 38px 0; padding: 4px 0 4px 26px; border-left: 2px solid var(--amber); }
+        .body .pull-quote p { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 22px; line-height: 1.45; margin: 0; }
+        .body .rich h3 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 27px; line-height: 1.25; margin: 42px 0 16px; }
+        .body .rich h4 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 21px; margin: 36px 0 14px; line-height: 1.25; }
+        .body .rich p { font-size: 17px; line-height: 1.82; color: var(--paper); margin-bottom: 24px; }
+        .body .rich ul, .body .rich ol { margin: 0 0 24px 24px; font-size: 17px; line-height: 1.82; }
+        .body .rich li { margin-bottom: 8px; }
+        .body .rich a { color: var(--amber-soft); text-decoration: underline; }
+        .body .rich blockquote { margin: 38px 0; padding: 4px 0 4px 26px; border-left: 2px solid var(--amber); font-family: 'Fraunces', serif; font-style: italic; font-size: 22px; line-height: 1.45; }
+
+        .faqs { margin: 40px 0 6px; }
+        .faqs .faqs-heading { font-family: 'Fraunces', serif; font-weight: 500; font-size: 20px; margin-bottom: 22px; }
+        .faq-item { margin-bottom: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--rule); }
+        .faq-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .faq-q { font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 15.5px; margin-bottom: 9px; line-height: 1.5; }
+        .faq-a { font-size: 15.5px; line-height: 1.75; color: rgb(211, 209, 209); }
+
+        .panel-cta { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .panel-cta p { font-size: 14.5px; color: rgb(209, 203, 203); flex: 1 1 320px; min-width: 0; margin: 0; line-height: 1.7; }
+        .cta-link { font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 3px; transition: all .25s; }
+        .cta-link:hover { color: var(--amber-soft); border-color: var(--amber-soft); gap: 12px; }
+
+        .status { padding: 90px 0; text-align: center; }
+        .status h1 { font-family: 'Fraunces', serif; font-weight: 500; font-size: 32px; margin-bottom: 14px; }
+        .status p { color: rgb(213, 209, 209); margin-bottom: 24px; }
+
+        /* ---------- More posts ---------- */
+        .more { border-top: 1px solid var(--rule); padding: 44px 0 70px; }
+        .more h2 { font-family: 'Space Mono', monospace; font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: rgb(207, 202, 202); margin-bottom: 22px; font-weight: 400; }
+        .more-list a { display: block; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+        .more-list .m-cat { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--amber-soft); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 6px; }
+        .more-list .m-title { font-family: 'Fraunces', serif; font-weight: 500; font-size: 19px; line-height: 1.3; transition: color .2s; }
+        .more-list a:hover .m-title { color: var(--amber-soft); }
+        .back-all { display: inline-block; margin-top: 24px; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 13px; border-bottom: 1px solid var(--rule-strong); padding-bottom: 3px; }
+        .back-all:hover { color: var(--amber-soft); border-color: var(--amber-soft); }
+
+        /* ---------- Footer ---------- */
+        footer { border-top: 1px solid var(--line); background: var(--bg-2); }
+        .foot-promo { background: linear-gradient(115deg, rgba(217, 119, 46, 0.10), rgba(169, 184, 76, 0.04)); border-bottom: 1px solid var(--line); padding: 22px 0; }
+        .foot-promo .wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+        .foot-promo p { font-size: 13.5px; color: white; max-width: 760px; line-height: 1.7; }
+        .foot-promo b { color: rgb(165, 112, 12); }
+        .foot-promo .btn-primary { background: var(--amber); color: #0B0C0F; font-family: 'Manrope', sans-serif; font-weight: 700; font-size: 14px; padding: 11px 22px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; transition: transform .25s, background .25s; }
+        .foot-promo .btn-primary:hover { transform: translateY(-2px); background: var(--amber-soft); }
+        .foot-contact { padding: 26px 0; border-bottom: 1px solid var(--line); font-family: 'Manrope', sans-serif; font-size: 13px; color: white; line-height: 1.9; }
+        .foot-contact .wrap { display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; }
+        .foot-contact strong { color: rgb(220, 121, 40); font-weight: 700; }
+        .foot-contact a { color: white; font-weight: 700; }
+        .fc-block { max-width: 520px; }
+        .foot-links-line { padding: 20px 24px; border-bottom: 1px solid var(--line); font-family: 'Manrope', sans-serif; font-size: 13px; color: var(--ink-dim); display: flex; flex-wrap: wrap; gap: 8px 0; align-items: center; justify-content: center; text-align: center; }
+        .foot-links-line a { color: rgb(215, 214, 214); font-weight: 700; }
+        .foot-links-line .sep { color: var(--ink-dimmer); margin: 0 10px; }
+        .foot-bank { padding: 16px 24px; font-family: 'Manrope', sans-serif; font-size: 12.5px; color: rgb(213, 211, 211); border-bottom: 1px solid var(--line); text-align: center; }
+        .foot-bank strong { color: var(--amber-soft); }
+        .foot-bottom { padding: 22px; display: flex; justify-content: space-between; font-family: 'Manrope', sans-serif; font-size: 12.5px; color: rgb(195, 190, 190); flex-wrap: wrap; gap: 8px; align-items: center; }
+        .social-row { display: flex; gap: 10px; }
+        .social-row a { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line-bright); display: flex; align-items: center; justify-content: center; font-size: 15px; color: var(--ink-dim); transition: all .2s; }
+        .social-row a:hover { border-color: var(--amber); color: var(--amber-soft); transform: translateY(-2px); }
+
+        @media (max-width: 640px) {
+            .wrap { padding: 0 20px; }
+            .article { padding: 36px 20px 30px; }
+            .nav-links { order: 3; width: 100%; margin-left: 0; gap: 14px; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="wrap nav-inner">
+            <a class="logo" href="index.html">
+                <img src="images/KADISS.png" alt="Kadis" style="height:28px; width:auto; border-radius:8px;">
+            </a>
+            <div class="nav-links">
+                <a href="index.html#solutions">Digital Solutions</a>
+                <a href="installation.html">ICT Engineering</a>
+                <a href="staffing.html">ICT Staffing</a>
+                <a href="training.html">ICT Training</a>
+                <a href="join.html">Join our Team</a>
+                <a href="rental.html">Equipment Rentals</a>
+                <a href="Allcategory.html">Store</a>
+                <a href="blog.html">Blog</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="article" id="articleRoot">
+            <div class="status"><p>Loading…</p></div>
+        </div>
+        <div class="wrap">
+            <div class="more" id="moreRoot" hidden>
+                <h2>More from the blog</h2>
+                <div class="more-list" id="moreList"></div>
+                <a class="back-all" href="blog.html">See all articles →</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="foot-promo">
+            <div class="wrap">
+                <p><b>Shop &amp; order now</b> — or place your order via phone call or WhatsApp message. We also do
+                    door-step delivery within Abuja and 4 surrounding states.</p>
+                <a class="btn-primary" href="https://wa.me/2348061379390">Order on WhatsApp →</a>
+            </div>
+        </div>
+        <div class="foot-contact">
+            <div class="wrap">
+                <div class="fc-block">
+                    <strong>Headoffice:</strong> Block B, 8th Floor (Rm 301), Federal Secretariat, CBD/Maitama, Abuja, Nigeria.
+                    <br><strong>Branch:</strong> Apo Urban Market, Apo, opposite Apo Shoprite, after NNPC/Dankogi Junction, Shop F1119, Abuja.
+                </div>
+                <div class="fc-block">
+                    <strong>WhatsApp / Hotline:</strong> <a href="tel:08061379390">0806 137 9390</a>, <a href="tel:08024207231">0802 420 7231</a><br>
+                    <strong>E-mail:</strong> <a href="mailto:kadisdigitals@gmail.com">kadisdigitals@gmail.com</a>
+                </div>
+            </div>
+        </div>
+        <div class="foot-links-line">
+            Trusted Equipment Rentals for ICT, Events &amp; Security — <a href="rental.html">Click here to rent now</a>
+            <span class="sep">|</span>
+            <a href="index.html#faqs">Frequently Asked Questions</a>
+            <span class="sep">|</span>
+            <a href="index.html#about">About Kadis</a>
+        </div>
+        <div class="foot-bank">
+            <strong>NB:</strong> All payments should be made to this bank account only: E-Franky Global Services Limited — GTBank: 0424528897.
+        </div>
+        <div class="foot-bottom">
+            <span>© 2020–2026 KADISDIGITALS · All Rights Reserved</span>
+            <div class="social-row">
+                <a href="https://web.facebook.com/kadisdigitals" aria-label="Facebook">f</a>
+                <a href="https://www.instagram.com/kadisdigitals" aria-label="Instagram">ig</a>
+                <a href="https://www.youtube.com/@kadisdigitals" aria-label="YouTube">yt</a>
+                <a href="https://www.tiktok.com/@kadisdigitals" aria-label="TikTok">tt</a>
+            </div>
+            <span>Powered by E-Franky Global Services Limited</span>
+        </div>
+    </footer>
+
+    <!-- Shared built-in posts (same file blog.html uses) -->
+    <script src="posts-data.js"></script>
+    <script>
+        const SITE = 'https://kadisdigitals.com/';
+        const SUPABASE_URL = "https://xjaieymgmhberbkbucrh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_r86lqj5QiI3qTgXicj7Ryg_AWkXZXu6";
+
+        const SAFE_HTML = {
+            ALLOWED_TAGS: ['p', 'br', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'font', 'div'],
+            ALLOWED_ATTR: ['href', 'style', 'color', 'target', 'rel']
+        };
+        const clean = (html) => DOMPurify.sanitize(html, SAFE_HTML);
+
+        const slug = (new URLSearchParams(location.search).get('slug') || '').trim();
+        const root = document.getElementById('articleRoot');
+
+        let sb = null;
+        try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+        catch (e) { console.warn('Supabase failed to initialise — local posts only:', e); }
+
+        /* ---------- head helpers ---------- */
+        function setMeta(attr, key, value) {
+            let el = document.head.querySelector(`meta[${attr}="${key}"]`);
+            if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+            el.setAttribute('content', value);
+        }
+        function setCanonical(url) {
+            let el = document.head.querySelector('link[rel="canonical"]');
+            if (!el) { el = document.createElement('link'); el.rel = 'canonical'; document.head.appendChild(el); }
+            el.href = url;
+        }
+        function absUrl(path) {
+            if (!path) return SITE + 'images/KADISS.png';
+            return /^https?:\/\//i.test(path) ? path : SITE + path.replace(/^\//, '');
+        }
+        const postUrl = (s) => `post?slug=${encodeURIComponent(s)}`;
+
+        /* ---------- data ---------- */
+        function normaliseDb(p) {
+            return {
+                slug: p.slug,
+                cats: (Array.isArray(p.cats) && p.cats.length ? p.cats : (p.cat ? [p.cat] : [])),
+                readMins: p.read_mins || 4,
+                title: p.title, dek: p.dek,
+                faqs: Array.isArray(p.faqs) ? p.faqs : [],
+                img: p.img_url || '',
+                cta: { text: p.cta_text, label: p.cta_label, href: p.cta_href },
+                body: Array.isArray(p.body) ? p.body : [],
+                date: p.created_at || ''
+            };
+        }
+
+        /* FIX 3: returns { ok, posts } so a failed or slow request is never
+           mistaken for "this article doesn't exist". */
+        async function loadDbPosts() {
+            if (!sb) return { ok: false, posts: [] };
+            try {
+                const { data, error } = await sb.from('posts').select('*')
+                    .eq('published', true).order('created_at', { ascending: false });
+                if (error || !data) return { ok: false, posts: [] };
+                return { ok: true, posts: data.map(normaliseDb) };
+            } catch (e) {
+                console.warn('Could not load admin posts:', e);
+                return { ok: false, posts: [] };
+            }
+        }
+
+        /* ---------- render ---------- */
+        function renderPost(p) {
+            /* FIX 2: canonical now uses the final address (/post?slug=...),
+               not post?slug=..., which the server redirects. */
+            const url = SITE + 'post?slug=' + encodeURIComponent(p.slug);
+            const fullTitle = `${p.title} | KADIS ICT & Engineering Solutions, Abuja`;
+            const desc = (p.dek || '').slice(0, 300);
+
+            document.title = fullTitle;
+            setMeta('name', 'description', desc);
+            setCanonical(url);
+            setMeta('property', 'og:type', 'article');
+            setMeta('property', 'og:title', p.title);
+            setMeta('property', 'og:description', desc);
+            setMeta('property', 'og:url', url);
+            setMeta('property', 'og:image', absUrl(p.img));
+            setMeta('name', 'twitter:card', 'summary_large_image');
+
+            const schema = {
+                '@context': 'https://schema.org',
+                '@type': 'Article',
+                headline: p.title,
+                description: desc,
+                image: absUrl(p.img),
+                mainEntityOfPage: url,
+                author: { '@type': 'Organization', name: 'KADIS ICT & Engineering Solutions' },
+                publisher: { '@type': 'Organization', name: 'KADIS ICT & Engineering Solutions', logo: { '@type': 'ImageObject', url: SITE + 'images/KADISS.png' } }
+            };
+            if (p.date) { schema.datePublished = p.date; schema.dateModified = p.date; }
+            const ld = document.createElement('script');
+            ld.type = 'application/ld+json';
+            ld.textContent = JSON.stringify(schema);
+            document.head.appendChild(ld);
+
+            const bodyHtml = p.body.map(block => {
+                if (block.html) return `<div class="rich">${clean(block.html)}</div>`;
+                if (block.h4) return `<h4>${clean(block.h4)}</h4>`;
+                if (block.quote) return `<div class="pull-quote"><p>${clean(block.quote)}</p></div>`;
+                if (block.p) return `<p class="${block.lede ? 'lede' : ''}">${clean(block.p)}</p>`;
+                return '';
+            }).join('');
+
+            const faqsHtml = (p.faqs && p.faqs.length) ? `
+                <div class="faqs">
+                    <div class="faqs-heading">Frequently Asked Questions</div>
+                    ${p.faqs.map(f => `<div class="faq-item"><div class="faq-q">${clean(f.question || '')}</div><div class="faq-a">${clean(f.answer || '')}</div></div>`).join('')}
+                </div>` : '';
+
+            const ctaHtml = (p.cta && p.cta.text) ? `
+                <div class="panel-cta">
+                    <p>${clean(p.cta.text)}</p>
+                    <a class="cta-link" href="${DOMPurify.sanitize(p.cta.href || '#')}">${clean(p.cta.label || 'Learn more')} →</a>
+                </div>` : '';
+
+            root.innerHTML = `
+                <div class="crumbs">
+                    <a href="index.html">Home</a><span>›</span><a href="blog.html">Blog</a><span>›</span>${clean(p.cats.join(' · '))}
+                </div>
+                <span class="cat">${p.cats.map(c => `<a href="blog.html?cat=${encodeURIComponent(c)}">${clean(c)}</a>`).join(' · ')}</span>
+                <h1>${clean(p.title)}</h1>
+                <p class="dek">${clean(p.dek || '')}</p>
+                <div class="meta">${p.readMins} min read</div>
+                ${p.img ? `<figure><img src="${DOMPurify.sanitize(p.img)}" alt="${DOMPurify.sanitize(p.title)}" onerror="this.closest('figure').classList.add('img-missing');"></figure>` : ''}
+                <div class="body">${bodyHtml}</div>
+                ${faqsHtml}
+                ${ctaHtml}
+            `;
+        }
+
+        function renderMore(current, list) {
+            const others = list.filter(p => p.slug !== current.slug);
+            const sharesCategory = (p) => p.cats.some(c => current.cats.includes(c));
+            const sameCat = others.filter(sharesCategory);
+            const rest = others.filter(p => !sharesCategory(p));
+            const picks = [...sameCat, ...rest].slice(0, 6);
+            if (!picks.length) return;
+            // The whole row is already a link to the post, so the category
+            // label here stays plain text rather than its own link — an <a>
+            // nested inside another <a> isn't valid and browsers handle it
+            // unpredictably. The clickable category links live on the main
+            // category line above the title instead.
+            document.getElementById('moreList').innerHTML = picks.map(p =>
+                `<a href="${postUrl(p.slug)}"><span class="m-cat">${clean(p.cats.join(' · '))}</span><span class="m-title">${clean(p.title)}</span></a>`
+            ).join('');
+            document.getElementById('moreRoot').hidden = false;
+        }
+
+        /* Only used when the article really doesn't exist (no slug, or the
+           database answered fine and this slug isn't in it). */
+        function renderNotFound() {
+            document.title = 'Article not found | KADIS ICT & Engineering Solutions';
+            setMeta('name', 'robots', 'noindex');
+            root.innerHTML = `
+                <div class="status">
+                    <h1>We couldn't find that article</h1>
+                    <p>The link may be old or mistyped. Browse all our articles instead.</p>
+                    <a class="cta-link" href="blog.html">Go to the blog →</a>
+                </div>`;
+        }
+
+        /* FIX 3: a failed or slow load shows a retry message and does NOT
+           add noindex, so a good article is never dropped by mistake. */
+        function renderLoadError() {
+            root.innerHTML = `
+                <div class="status">
+                    <h1>This article didn't load</h1>
+                    <p>Please check your connection and refresh the page.</p>
+                    <a class="cta-link" href="blog.html">Go to the blog →</a>
+                </div>`;
+        }
+
+        // posts-data.js entries only ever had a single .cat — this gives them
+        // a .cats array too, the same shape the database-backed posts use,
+        // so category links and "more from this category" work on every post.
+        function ensureCatsArray(p) {
+            if (Array.isArray(p.cats) && p.cats.length) return p;
+            return { ...p, cats: p.cat ? [p.cat] : [] };
+        }
+
+        /* ---------- boot ---------- */
+        (async function init() {
+            if (!slug) { renderNotFound(); return; }
+
+            let post = ALL_POSTS.find(p => p.slug === slug);
+            if (post) post = ensureCatsArray(post);
+
+            if (post) {
+                renderPost(post);
+                loadDbPosts().then(r => renderMore(post, [...r.posts, ...ALL_POSTS.map(ensureCatsArray)]));
+            } else {
+                const res = await loadDbPosts();
+                post = res.posts.find(p => p.slug === slug);
+                if (post) {
+                    renderPost(post);
+                    renderMore(post, [...res.posts, ...ALL_POSTS.map(ensureCatsArray)]);
+                } else if (!res.ok) {
+                    renderLoadError();
+                } else {
+                    renderNotFound();
+                }
+            }
+        })();
+    </script>
+    <script src="responsive.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1361 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Notes — KADIS ICT & Engineering Solutions</title>
+    <meta name="description" content="Field notes on ICT, security, smart-home and infrastructure work from KADIS ICT & Engineering Solutions, Abuja.">
+    <link rel="canonical" href="https://kadisdigitals.com/blog.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Space+Mono:wght@400;700&family=Manrope:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0C0B09;
+            --ink-2: #131210;
+            --ink-3: #1B1916;
+            --paper: #EFEAE0;
+            --paper-dim: #A79C89;
+            --paper-dimmer: #6B6255;
+            --rule: rgba(239, 234, 224, 0.10);
+            --rule-strong: rgba(239, 234, 224, 0.20);
+            --amber: #D9772E;
+            --amber-soft: #E8A15E;
+
+            /* add these */
+            --bg: var(--ink);
+            --bg-2: var(--ink-2);
+            --bg-3: var(--ink-3);
+            --line: var(--rule);
+            --line-bright: var(--rule-strong);
+            --ink-dim: var(--paper-dim);
+            --ink-dimmer: var(--paper-dimmer);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--paper);
+            font-family: 'Source Serif 4', serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .serif-display {
+            font-family: 'Fraunces', serif;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        .sans {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        ::selection {
+            background: var(--amber-soft);
+            color: #161310;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        /* ---------- Top nav ---------- */
+        nav {
+            border-bottom: 1px solid var(--rule);
+            padding: 18px 0;
+            background: var(--bg);
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            row-gap: 10px;
+            column-gap: 20px;
+            flex: 1;
+            min-width: 0;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--ink-dim);
+            margin-left: 20px;
+        }
+
+        .nav-links a {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 0;
+            white-space: nowrap;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover {
+            color: white;
+            border-bottom: 2px solid var(--amber);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background: var(--amber);
+            transition: width .3s cubic-bezier(.16, .8, .24, 1);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 0 0 auto;
+        }
+
+        .nav-actions .btn-primary {
+            white-space: nowrap;
+            font-size: 12px;
+            padding: 11px 15px;
+        }
+
+        /* ---------- Masthead ---------- */
+        .masthead {
+            padding: 88px 0 60px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .masthead .kicker {
+            font-family: 'Space Mono';
+            font-size: 11.5px;
+            color: var(--amber-soft);
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 22px;
+            display: block;
+        }
+
+        .masthead h1 {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: clamp(42px, 7vw, 84px);
+            line-height: 0.98;
+            letter-spacing: -0.01em;
+            margin-bottom: 24px;
+        }
+
+        .masthead h1 em {
+            font-style: italic;
+            font-weight: 400;
+            color: white;
+        }
+
+        .masthead .dek {
+            font-size: 17px;
+            color: rgb(213, 209, 209);
+            max-width: 540px;
+            line-height: 1.7;
+            font-family: 'Source Serif 4';
+        }
+
+        /* ---------- Index / accordion ---------- */
+        /* FIX 1: longhand padding so it no longer wipes out the 32px side
+           padding that .wrap gives this section (it has both classes). */
+        .index-section {
+            padding-top: 10px;
+            padding-bottom: 100px;
+        }
+
+        .index-head {
+            font-family: 'Space Mono';
+            font-size: 11.5px;
+            color: rgb(207, 202, 202);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            padding: 40px 0 20px;
+        }
+
+        .entry {
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .entry-summary {
+            display: grid;
+            grid-template-columns: 64px 1fr auto auto;
+            gap: 22px;
+            align-items: center;
+            padding: 30px 0;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .idx-num {
+            font-family: 'Fraunces';
+            font-weight: 400;
+            font-size: 15px;
+            color: var(--paper-dimmer);
+            font-style: italic;
+        }
+
+        .idx-main .cat {
+            font-family: 'Space Mono';
+            font-size: 10.5px;
+            color: var(--amber-soft);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 9px;
+        }
+
+        .idx-main .cat a:hover {
+            text-decoration: underline;
+        }
+
+        .idx-main h3 {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 23px;
+            line-height: 1.25;
+            margin-bottom: 8px;
+            transition: color .2s;
+        }
+
+        .entry-summary:hover .idx-main h3 {
+            color: var(--amber-soft);
+        }
+
+        .idx-main p {
+            color: rgb(211, 209, 209);
+            font-size: 14px;
+            line-height: 1.65;
+            max-width: 520px;
+        }
+
+        .idx-meta {
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: var(--paper-dimmer);
+            white-space: nowrap;
+        }
+
+        .toggle-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid var(--rule-strong);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-family: 'Manrope';
+            font-size: 16px;
+            color: var(--paper-dim);
+            transition: transform .35s cubic-bezier(.16, .8, .24, 1), border-color .3s, color .3s;
+        }
+
+        .entry.open .toggle-icon {
+            transform: rotate(45deg);
+            border-color: var(--amber-soft);
+            color: var(--amber-soft);
+        }
+
+        .entry.open .idx-main h3 {
+            color: var(--amber-soft);
+        }
+
+        .panel-wrap {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows .5s cubic-bezier(.16, .8, .24, 1);
+        }
+
+        .entry.open .panel-wrap {
+            grid-template-rows: 1fr;
+        }
+
+        .panel-inner {
+            overflow: hidden;
+        }
+
+        .panel {
+            padding: 6px 0 50px;
+            max-width: 680px;
+        }
+
+        .panel figure {
+            margin: 6px 0 34px;
+            border: 1px solid var(--rule-strong);
+            border-radius: 4px;
+            background: var(--ink-2);
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+
+        .panel figure img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 2px;
+            display: block;
+        }
+
+        .panel figure.img-missing {
+            background: repeating-linear-gradient(45deg, var(--ink-2), var(--ink-2) 10px, var(--ink-3) 10px, var(--ink-3) 20px);
+        }
+
+        .panel figure.img-missing img {
+            display: none;
+        }
+
+        .panel figure .img-placeholder-label {
+            display: none;
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: var(--paper-dimmer);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .panel figure.img-missing .img-placeholder-label {
+            display: block;
+        }
+
+        .panel figcaption {
+            display: none;
+        }
+
+        .panel p {
+            font-size: 17px;
+            line-height: 1.82;
+            color: var(--paper);
+            margin-bottom: 24px;
+            white-space: pre-line;
+        }
+
+        .panel p.lede::first-letter {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 64px;
+            float: left;
+            line-height: 0.8;
+            margin: 6px 10px 0 0;
+            color: var(--amber-soft);
+        }
+
+        .panel h4 {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 21px;
+            margin: 36px 0 14px;
+            line-height: 1.25;
+        }
+
+        /* Rich-text posts (written in the new admin editor) get the same
+           heading, quote, list and link treatment as the hand-written posts
+           above — this is what makes the editor and the live post identical. */
+        .panel .rich h3 {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 27px;
+            line-height: 1.25;
+            margin: 42px 0 16px;
+        }
+
+        .panel .rich h4 {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 21px;
+            margin: 36px 0 14px;
+            line-height: 1.25;
+        }
+
+        .panel .rich p {
+            font-size: 17px;
+            line-height: 1.82;
+            color: var(--paper);
+            margin-bottom: 24px;
+        }
+
+        .panel .rich ul,
+        .panel .rich ol {
+            margin: 0 0 24px 24px;
+            font-size: 17px;
+            line-height: 1.82;
+        }
+
+        .panel .rich li {
+            margin-bottom: 8px;
+        }
+
+        .panel .rich a {
+            color: var(--amber-soft);
+            text-decoration: underline;
+        }
+
+        .panel .pull-quote {
+            margin: 38px 0;
+            padding: 4px 0 4px 26px;
+            border-left: 2px solid var(--amber);
+        }
+
+        .panel .pull-quote p {
+            font-family: 'Fraunces';
+            font-style: italic;
+            font-weight: 400;
+            font-size: 22px;
+            line-height: 1.45;
+            color: var(--paper);
+            margin: 0;
+        }
+
+        .panel .rich blockquote {
+            margin: 38px 0;
+            padding: 4px 0 4px 26px;
+            border-left: 2px solid var(--amber);
+            font-family: 'Fraunces';
+            font-style: italic;
+            font-weight: 400;
+            font-size: 22px;
+            line-height: 1.45;
+            color: var(--paper);
+        }
+
+        .panel-faqs {
+            margin: 40px 0 6px;
+        }
+
+        .panel-faqs .faqs-heading {
+            font-family: 'Fraunces';
+            font-weight: 500;
+            font-size: 19px;
+            margin-bottom: 22px;
+            color: var(--paper);
+        }
+
+        .faq-item {
+            margin-bottom: 22px;
+            padding-bottom: 22px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .faq-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .faq-item .faq-q {
+            font-family: 'Manrope';
+            font-weight: 700;
+            font-size: 15.5px;
+            color: var(--paper);
+            margin-bottom: 9px;
+            line-height: 1.5;
+        }
+
+        .faq-item .faq-a {
+            font-family: 'Source Serif 4';
+            font-size: 15.5px;
+            line-height: 1.75;
+            color: rgb(211, 209, 209);
+        }
+
+        .panel-tags {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            margin: 30px 0 0;
+            padding-top: 22px;
+            border-top: 1px solid var(--rule);
+        }
+
+        .panel-tags .tags-label {
+            font-family: 'Space Mono';
+            font-size: 10px;
+            color: var(--paper-dimmer);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-right: 4px;
+        }
+
+        .panel-tags a {
+            font-family: 'Manrope';
+            font-weight: 600;
+            font-size: 11.5px;
+            color: var(--paper-dim);
+            background: transparent;
+            border: 1px solid var(--rule-strong);
+            border-radius: 100px;
+            padding: 4px 11px;
+            transition: border-color .2s, color .2s, background .2s;
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .panel-tags a:hover {
+            border-color: var(--amber-soft);
+            color: var(--amber-soft);
+            background: rgba(217, 119, 46, 0.08);
+        }
+
+        .panel-cta {
+            margin-top: 36px;
+            padding-top: 28px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .panel-cta p {
+            font-size: 14px;
+            color: rgb(209, 203, 203);
+            flex: 1 1 320px;
+            min-width: 0;
+            margin: 0;
+            white-space: pre-line;
+        }
+
+        .cta-link {
+            font-family: 'Manrope';
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--paper);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--rule-strong);
+            padding-bottom: 3px;
+            transition: all .25s;
+            white-space: nowrap;
+        }
+
+        .cta-link:hover {
+            color: var(--amber-soft);
+            border-color: var(--amber-soft);
+            gap: 12px;
+        }
+
+        .permalink {
+            display: inline-block;
+            margin-top: 16px;
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: var(--paper-dimmer);
+            transition: color .2s;
+        }
+
+        .permalink:hover {
+            color: var(--amber-soft);
+        }
+
+        .placeholder-tag {
+            display: inline-block;
+            margin-bottom: 14px;
+            font-family: 'Space Mono';
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ink);
+            background: var(--amber-soft);
+            padding: 4px 9px;
+            border-radius: 3px;
+        }
+
+        @media (max-width:640px) {
+            .entry-summary {
+                grid-template-columns: 1fr auto;
+                grid-template-areas: "num toggle" "main main" "meta meta";
+                row-gap: 8px;
+            }
+
+            .idx-num {
+                grid-area: num;
+            }
+
+            .toggle-icon {
+                grid-area: toggle;
+                justify-self: end;
+            }
+
+            .idx-main {
+                grid-area: main;
+            }
+
+            .idx-meta {
+                grid-area: meta;
+            }
+
+            .nav-links {
+                order: 3;
+                width: 100%;
+                margin-left: 0;
+                gap: 14px;
+            }
+        }
+
+        /* ---------- Footer (quiet, editorial) ---------- */
+        footer {
+            border-top: 1px solid var(--line);
+            background: var(--bg-2);
+        }
+
+        .foot-promo {
+            background: linear-gradient(115deg, rgba(217, 119, 46, 0.10), rgba(169, 184, 76, 0.04));
+            border-bottom: 1px solid var(--line);
+            padding: 22px 0;
+        }
+
+        .foot-promo .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .foot-promo p {
+            font-size: 13.5px;
+            color: white;
+            max-width: 760px;
+            line-height: 1.7;
+        }
+
+        .foot-promo b {
+            color: rgb(165, 112, 12);
+        }
+
+        .foot-promo .btn-primary {
+            background: var(--amber);
+            color: #0B0C0F;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 11px 22px;
+            border-radius: 10px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            box-shadow: 0 8px 22px rgba(217, 119, 46, 0.22);
+            transition: transform .25s, background .25s;
+        }
+
+        .foot-promo .btn-primary:hover {
+            transform: translateY(-2px);
+            background: var(--amber-soft);
+        }
+
+        .foot-contact {
+            padding: 26px 0;
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+            color: white;
+            line-height: 1.9;
+        }
+
+        .foot-contact .wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            justify-content: space-between;
+            color: white;
+        }
+
+        .foot-contact strong {
+            color: rgb(220, 121, 40);
+            font-weight: 700;
+        }
+
+        .foot-contact a {
+            color: var(--amber-soft);
+            font-weight: 700;
+        }
+
+        .foot-contact .fc-block {
+            max-width: 520px;
+            color: white;
+        }
+
+
+        .fc-block a {
+            color: white;
+        }
+
+        .foot-main {
+            padding: 56px 0 40px;
+        }
+
+        .foot-grid {
+            display: grid;
+            grid-template-columns: 1.3fr repeat(3, 1fr);
+            gap: 40px;
+            margin-bottom: 0;
+        }
+
+        .foot-col h5 {
+            font-size: 13px;
+            color: rgb(162, 148, 148);
+            margin-bottom: 18px;
+            font-family: 'Space Mono';
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .foot-col a {
+            display: block;
+            font-size: 13.5px;
+            color: var(--ink-dim);
+            margin-bottom: 12px;
+            transition: color .2s;
+        }
+
+        .foot-col a:hover {
+            color: var(--amber-soft);
+        }
+
+        /* ---- Blog topics: compact wrapped pill row instead of one giant
+       vertical list crammed into a footer column ---- */
+        .foot-topics {
+            padding: 30px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .foot-topics h5 {
+            font-size: 13px;
+            color: white;
+            margin-bottom: 16px;
+            font-family: 'Space Mono';
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .foot-topics-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .foot-topics-row a {
+            font-size: 12.5px;
+            color: var(--ink-dim);
+            background: var(--bg-3);
+            border: 1px solid rgb(168, 132, 102);
+            border-radius: 100px;
+            padding: 7px 14px;
+            transition: border-color .2s, color .2s;
+            white-space: nowrap;
+        }
+
+        .foot-topics-row a:hover {
+            border-color: white;
+            color: var(--amber-soft);
+        }
+
+        .foot-links-line {
+            padding: 20px 24px;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            font-size: 13px;
+            color: var(--ink-dim);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 0;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .foot-links-line a {
+            color: rgb(215, 214, 214);
+            font-weight: 700;
+        }
+
+        .foot-links-line .sep {
+            color: var(--ink-dimmer);
+            margin: 0 10px;
+        }
+
+        .foot-bank {
+            padding: 16px 24px;
+            font-size: 12.5px;
+            color: rgb(213, 211, 211);
+            border-bottom: 1px solid var(--line);
+            text-align: center;
+        }
+
+        .foot-bank strong {
+            color: var(--amber-soft);
+        }
+
+        .foot-bottom {
+            padding: 22px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12.5px;
+            color: rgb(195, 190, 190);
+            flex-wrap: wrap;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .social-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .social-row a {
+            width: 36px;
+            height: 36px;
+            border-radius: 9px;
+            border: 1px solid var(--line-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: var(--ink-dim);
+            transition: all .2s;
+        }
+
+        .social-row a:hover {
+            border-color: var(--amber);
+            color: var(--amber-soft);
+            transform: translateY(-2px);
+        }
+
+        .whatsapp-channel {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            width: fit-content;
+            padding: 13px 18px;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--ink);
+            transition: all 0.25s ease;
+            margin: 0 22px 24px;
+        }
+
+        .whatsapp-channel:hover {
+            transform: translateY(-2px);
+            border-color: rgba(37, 211, 102, 0.45);
+            background: rgba(37, 211, 102, 0.07);
+        }
+
+        .whatsapp-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            border-radius: 50%;
+            background: #25D366;
+            color: #fff;
+            font-size: 21px;
+        }
+
+        .whatsapp-content {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            color: white;
+        }
+
+        .whatsapp-content strong {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .whatsapp-content small {
+            font-size: 11px;
+            color: var(--ink-dim);
+            line-height: 1.3;
+        }
+
+        .whatsapp-arrow {
+            margin-left: 8px;
+            font-size: 19px;
+            color: var(--amber);
+            transition: transform 0.25s ease;
+        }
+
+        .whatsapp-channel:hover .whatsapp-arrow {
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="wrap nav-inner">
+            <a class="logo" href="index.html">
+                <img src="images/KADISS.png" alt="Kadis" style="height:28px; width:auto; border-radius:8px;">
+            </a>
+            <div class="nav-links">
+                <a href="index.html#solutions">Digital Solutions</a>
+                <a href="installation.html">ICT Engineering</a>
+                <a href="staffing.html">ICT Staffing</a>
+                <a href="training.html">ICT Training</a>
+                <a href="join.html">Join our Team</a>
+                <a href="rental.html">Equipment Rentals</a>
+                <a href="Allcategory.html">Store</a>
+                <a href="blog.html">Blog</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="masthead">
+        <div class="wrap">
+            <span class="kicker">Kadis Journal — Vol. 01</span>
+            <h1 class="serif-display">Field Notes <em>on ICT, installations & infrastructure.</em></h1>
+            <p class="dek">Dispatches from the Kadis engineering floor — how we choose equipment, what installations
+                teach us,
+                and what's changing across security, smart-home and digital infrastructure work in Abuja. Click a
+                dispatch to
+                read it right here.</p>
+        </div>
+    </section>
+
+    <section class="index-section wrap">
+        <div class="index-head">All dispatches</div>
+        <div id="entryList"></div>
+    </section>
+
+    <footer>
+        <div class="foot-promo">
+            <div class="wrap">
+                <p><b>Shop & order now</b> — or place your order via phone call or WhatsApp message. We also do
+                    door-step
+                    delivery within Abuja and 4 surrounding states.</p>
+                <a class="btn-primary" href="https://wa.me/2348061379390">Order on WhatsApp →</a>
+            </div>
+        </div>
+
+        <div class="foot-contact" id="contact">
+            <div class="wrap">
+                <div class="fc-block">
+                    <strong>Headoffice:</strong> Block B, 8th Floor (Rm 301), Federal Secretariat, CBD/Maitama, Abuja,
+                    Nigeria.
+                    <br> <strong>Branch:</strong> Apo Urban Market, Apo, opposite Apo Shoprite, after
+                    NNPC/Dankogi Junction,
+                    Shop F1119, Abuja.
+                </div>
+                <div class="fc-block">
+                    <strong>WhatsApp / Hotline:</strong> <a href="tel:08061379390">0806 137 9390</a>, <a
+                        href="tel:08024207231">0802 420 7231</a><br>
+                    <strong>E-mail:</strong> <a href="mailto:kadisdigitals@gmail.com">kadisdigitals@gmail.com</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="wrap">
+            <div class="foot-main">
+                <div class="foot-grid">
+                    <div class="foot-col">
+                        <a class="logo" href="index.html" style="margin-bottom:16px;">
+                            <img src="images/KADISS.png" alt="Kadis"
+                                style="height:38px; width:auto; border-radius:8px;">
+                        </a>
+                        <p style="color:var(--ink-dim); font-size:13.5px; line-height:1.7; max-width:280px;">Abuja's No.
+                            1 ICT
+                            Ecosystem — gadgets, security, smart home, satellite & digital solutions, delivered
+                            door-step.</p>
+                    </div>
+                    <div class="foot-col">
+                        <h5>Shop</h5>
+                        <a href="security.html">Security Systems</a>
+                        <a href="category.html?cat=cctv-camera">CCTV Cameras</a>
+                        <a href="smart.html">Smart Home</a>
+                        <a href="wifi.html">Wifi / Mifi / Routers</a>
+                        <a href="satellite.html">Starlink</a>
+                        <a href="gadgets.html">Phone Accessories</a>
+                        <a href="ps.html">Games & Consoles</a>
+                        <a href="solar.html">Solar & Batteries</a>
+                        <a href="cables.html">Cables, Wires & Adapters</a>
+                        <a href="ict_tools.html">ICT Engineering Tools</a>
+                        <a href="electronic_converter.html">Electronic Converters & OTG</a>
+                        <a href="ringlights.html">Ring lights</a>
+                        <a href="satellite.html">Tv Decoders & Satellite Accessories</a>
+                    </div>
+                    <div class="foot-col">
+                        <h5>Services</h5>
+                        <a href="installation.html">ICT Installations & Engineering</a>
+                        <a href="techforce.html">TechForce</a>
+                        <a href="dts.html">Digital Transformation (KDTS)</a>
+                        <a href="rental.html">Equipment Rentals</a>
+                        <a href="security.html">Security Systems</a>
+                        <a href="skillab.html">Tech SkillLab</a>
+                        <a href="satelliteinstall.html">Satellite Solutions</a>
+                        <a href="smartiot.html">Smart Home & IoT</a>
+                        <a href="eventmedia.html">Event & Media</a>
+                        <a href="projects.html">Projects</a>
+                        <a href="delivery.html">Delivery</a>
+                        <a href="installation.html">Starlink Installations</a>
+                        <a href="security.html">Security Systems</a>
+                        <a href="installation.html">AC & Freezer installation</a>
+                        <a href="satelliteinstall.html">Satellite Installation</a>
+                        <a href="source.html">Request Equipment</a>
+                        <a href="training.html">ICT Training</a>
+                        <a href="join.html">Join Our Team</a>
+                    </div>
+                    <div class="foot-col">
+                        <div class="foot-col">
+                            <h5>Contact</h5>
+                            <a href="tel:08061379390">0806 137 9390</a>
+                            <a href="tel:08024207231">0802 420 7231</a>
+                            <a href="#"> Head of Service, Block B, 8th Floor (Rm 301), Federal Secretariat, CBD/Maitama,
+                                Abuja, Nigeria.</a>
+                            <a href="#">KADIS SHOP : Apo Urban Market, Apo, opposite Apo Shoprite, after
+                                NNPC/Dankogi Junction, Shop F1119, Abuja.</a>
+                            <a href="mailto:kadisdigitals@gmail.com">kadisdigitals@gmail.com</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="foot-topics">
+                    <h5>Blog Categories</h5>
+                    <div class="foot-topics-row">
+                        <a href="post?slug=cctv-and-security-gadgets-solution">CCTV & Security</a>
+                        <a href="post?slug=electric-fence-solutions">Electric Fencing</a>
+                        <a href="post?slug=security-and-surveillance-system-solutions">Surveillance Systems</a>
+                        <a href="post?slug=access-control-system">Access Control</a>
+                        <a href="post?slug=biometric-devices-and-access-control-system-solutions">Biometric
+                            Devices</a>
+                        <a href="post?slug=automatic-or-electronic-gate-solutions">Automated Gates</a>
+                        <a href="post?slug=smart-door-locks">Smart Door Locks</a>
+                        <a href="post?slug=smart-homes-and-automated-house">Smart Homes</a>
+                        <a href="post?slug=smart-switches-hotels-commercial-buildings">Smart Switches</a>
+                        <a href="post?slug=smart-lighting-for-estates">Smart Lighting</a>
+                        <a href="post?slug=smart-curtains-luxury-apartments">Smart Curtains</a>
+                        <a href="post?slug=dstv-free-to-air-sltv-starlink-freetv-gotv-and-startimes-solutions">DSTV,
+                            GOtv &
+                            Starlink</a>
+                        <a href="post?slug=starlink-satellite-network-and-installation">Starlink Installation</a>
+                        <a href="post?slug=satellite-systems-remote-areas">Satellite for Remote Areas</a>
+                        <a href="post?slug=ict-networking-and-troubleshooting">Networking & Troubleshooting</a>
+                        <a href="post?slug=network-booster-and-installation">Network Boosters</a>
+                        <a href="post?slug=network-jammer-and-installation">Network Jammers</a>
+                        <a href="post?slug=pabx-and-intercom-system-solutions">PABX & Intercom</a>
+                        <a href="post?slug=solar-and-inverter-system">Solar & Inverters</a>
+                        <a href="post?slug=mobile-phone-updates-and-solutions">Mobile Phone Solutions</a>
+                        <a href="post?slug=phone-repairs-and-solution-tips">Phone Repairs</a>
+                        <a href="post?slug=phone-accessories-support-and-solutions">Phone Accessories</a>
+                        <a href="post?slug=computer-gadgets-and-accessories-solutions">Computer Accessories</a>
+                        <a href="post?slug=computer-repairs-and-solution-tips">Computer Repairs</a>
+                        <a href="post?slug=playstation-ps-games-consoles-and-accessories-solutions">PlayStation &
+                            Consoles</a>
+                        <a href="post?slug=drones-and-installation">Drones</a>
+                        <a href="post?slug=ict-engineering-tools">ICT Engineering Tools</a>
+                        <a href="post?slug=kadis-techforce">KADIS TechForce</a>
+                        <a href="post?slug=digital-transformation-kdts">Digital Transformation</a>
+                        <a href="post?slug=kadis-equipment-rentals-expansion">Equipment Rentals</a>
+                        <a href="post?slug=time-attendance-system">Time Attendance Systems</a>
+                        <a href="post?slug=ac-fridge-and-tv-installation-and-maintenance">AC, Fridge & TV
+                            Install</a>
+                        <a href="post?slug=ac-tv-and-refrigerator-sales-and-delivery">AC, TV & Fridge Sales</a>
+                        <a href="post?slug=fire-alarm-and-smoke-detectors">Fire Alarms & Smoke Detectors</a>
+                        <a href="post?slug=fire-extinguisher-sales-installation-training-and-certification">Fire
+                            Extinguishers</a>
+                        <a href="post?slug=fire-safety-technology-guide">Fire Safety Technology</a>
+                        <a href="post?slug=smoke-extractors">Smoke Extractors</a>
+                        <a href="post?slug=street-lights-and-poles">Street Lights & Poles</a>
+                        <a href="post?slug=rope-lights-and-designs">Rope Lights</a>
+                    </div>
+                </div>
+
+                <div class="foot-topics">
+                    <h5>Tips, Skills, Solutions & Updates</h5>
+                    <div class="foot-topics-row">
+                        <a href="tips.html#post-smart-door-lock-installation-in-abuja">Smart Door Lock Install</a>
+                        <a href="tips.html#post-smart-locks-for-schools-and-offices">Locks for Schools & Offices</a>
+                        <a href="tips.html#post-how-smart-locks-work-with-cctv-systems">Smart Locks & CCTV</a>
+                        <a href="tips.html#post-future-of-smart-lock-technology">Future of Smart Locks</a>
+                        <a href="tips.html#post-smart-secure-schools-abuja">Smart & Secure Schools</a>
+                        <a href="tips.html#post-from-manual-records-to-smart-schools">School Management Systems</a>
+                        <a href="tips.html#post-transforming-school-management-abuja">School ERP Systems</a>
+                        <a href="tips.html#post-smart-lock-installation-mistakes-to-avoid">Lock Install Mistakes</a>
+                        <a href="tips.html#post-how-to-secure-your-property-with-smart-locks">Secure Your Property</a>
+                        <a href="tips.html#post-smart-access-using-rfid-and-biometrics">RFID & Biometric Access</a>
+                        <a href="tips.html#post-best-smart-lock-brands-in-nigeria">Best Smart Lock Brands</a>
+                        <a href="tips.html#post-smart-locks-for-gates-and-main-doors">Locks for Gates & Doors</a>
+                        <a href="tips.html#post-voice-controlled-smart-locks-explained">Voice-Controlled Locks</a>
+                        <a href="tips.html#post-smart-lock-security-features-to-know">Smart Lock Features</a>
+                        <a href="tips.html#post-keyless-entry-systems-explained">Keyless Entry Systems</a>
+                        <a href="tips.html#post-smart-lock-maintenance-tips">Smart Lock Maintenance</a>
+                        <a href="tips.html#post-why-renting-event-ict-equipment-in-abuja-saves-money">Why Rent Event &
+                            ICT Gear</a>
+                        <a href="tips.html#post-abuja-equipment-rentals">Abuja Equipment Rentals</a>
+                        <a href="tips.html#post-smart-locks-with-mobile-app-control">App-Controlled Locks</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="foot-links-line">
+            Trusted Equipment Rentals for ICT, Events & Security — <a href="rental.html">Click here to rent now</a>
+            <span class="sep">|</span>
+            <a href="index.html#faqs">Frequently Asked Questions</a>
+            <span class="sep">|</span>
+            <a href="index.html#about">About Kadis</a>
+        </div>
+
+        <div class="foot-bank">
+            <strong>NB:</strong> All payments should be made to this bank account only: E-Franky Global Services Limited
+            —
+            GTBank: 0424528897.
+        </div>
+
+        <div class="foot-bottom">
+            <span>© 2020–2026 KADISDIGITALS · All Rights Reserved</span>
+            <div class="social-row">
+                <a href="https://web.facebook.com/kadisdigitals" aria-label="Facebook">f</a>
+                <a href="https://www.instagram.com/kadisdigitals" aria-label="Instagram">ig</a>
+                <a href="https://www.youtube.com/@kadisdigitals" aria-label="YouTube">yt</a>
+                <a href="https://www.tiktok.com/@kadisdigitals" aria-label="TikTok">tt</a>
+            </div>
+            <span>Powered by E-Franky Global Services Limited</span>
+        </div>
+        <a href="https://whatsapp.com/channel/0029VaxUvHk3gvWa5WhtZ03K" class="whatsapp-channel" target="_blank"
+            rel="noopener noreferrer" aria-label="Follow KADIS ICT & Media Solutions on WhatsApp">
+            <span class="whatsapp-icon" aria-hidden="true">
+                <i class="fab fa-whatsapp"></i>
+            </span>
+
+            <span class="whatsapp-content">
+                <strong>Follow KADIS on WhatsApp</strong>
+                <small>Get updates, solutions & tech insights</small>
+            </span>
+
+            <span class="whatsapp-arrow" aria-hidden="true">→</span>
+        </a>
+    </footer>
+
+
+    <script src="posts-data.js"></script>
+    <script>
+        const SUPABASE_URL = "https://xjaieymgmhberbkbucrh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_r86lqj5QiI3qTgXicj7Ryg_AWkXZXu6";
+
+        let sb = null;
+        try {
+            sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+            console.warn('Supabase client failed to initialize — showing local posts only:', e);
+        }
+
+        const SAFE_HTML = {
+            ALLOWED_TAGS: ['p', 'br', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'font', 'div'],
+            ALLOWED_ATTR: ['href', 'style', 'color', 'target', 'rel']
+        };
+
+        /* FIX 4: escape anything taken from the address bar before it is
+           written into the page. */
+        const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        async function loadAndRenderPosts() {
+            let supabasePosts = [];
+            if (sb) {
+                try {
+                    const fetchPromise = sb
+                        .from('posts')
+                        .select('*')
+                        .eq('published', true)
+                        .order('created_at', { ascending: false });
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Supabase request timed out')), 4000)
+                    );
+                    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+                    if (!error && data) {
+                        supabasePosts = data.map((p, i) => ({
+                            slug: p.slug,
+                            num: String(900 + i).padStart(3, '0'),
+                            cats: (Array.isArray(p.cats) && p.cats.length ? p.cats : (p.cat ? [p.cat] : [])),
+                            readMins: p.read_mins || 4,
+                            title: p.title,
+                            dek: p.dek,
+                            tags: Array.isArray(p.tags) ? p.tags : [],
+                            faqs: Array.isArray(p.faqs) ? p.faqs : [],
+                            img: p.img_url || '',
+                            cta: { text: p.cta_text, label: p.cta_label, href: p.cta_href },
+                            body: p.body
+                        }));
+                    } else if (error) {
+                        console.warn('Could not load admin posts:', error.message);
+                    }
+                } catch (e) {
+                    console.warn('Could not load admin posts (or request timed out) — showing local posts only:', e);
+                }
+            }
+
+            // Every post gets a .cats array, whether it came from Supabase
+            // (already has one) or from posts-data.js (only ever had a single
+            // .cat) — this is what lets category labels be clickable links.
+            const FULL_LIST = [...supabasePosts, ...ALL_POSTS].map(p => ({
+                ...p,
+                cats: (Array.isArray(p.cats) && p.cats.length) ? p.cats : (p.cat ? [p.cat] : [])
+            }));
+
+            // If the page was opened as blog.html?cat=Something, only show
+            // posts that have that category.
+            const catFilter = (new URLSearchParams(location.search).get('cat') || '').trim();
+            const VISIBLE_LIST = catFilter
+                ? FULL_LIST.filter(p => p.cats.some(c => c.toLowerCase() === catFilter.toLowerCase()))
+                : FULL_LIST;
+
+            const indexHead = document.querySelector('.index-head');
+            indexHead.innerHTML = catFilter
+                ? `Category: ${esc(catFilter)} <a href="blog.html" style="color:var(--amber-soft); text-decoration:underline; margin-left:10px;">Clear filter ×</a>`
+                : 'All dispatches';
+
+            const list = document.getElementById('entryList');
+            list.innerHTML = '';
+
+            if (catFilter && !VISIBLE_LIST.length) {
+                list.innerHTML = `<p style="padding:30px 0; color:var(--paper-dimmer);">No posts found in "${esc(catFilter)}" yet.</p>`;
+            }
+
+            VISIBLE_LIST.forEach((p) => {
+                const entry = document.createElement('div');
+                entry.className = 'entry';
+                entry.id = `post-${p.slug}`;
+
+                // Rich-text posts (written in the new admin editor) come through as
+                // a single { html: "..." } block. Older/hand-written posts keep
+                // using p / h4 / quote blocks. Both render inside the same panel.
+                const bodyHtml = p.body.map(block => {
+                    if (block.html) return `<div class="rich">${DOMPurify.sanitize(block.html, SAFE_HTML)}</div>`;
+                    if (block.h4) return `<h4>${block.h4}</h4>`;
+                    if (block.quote) return `<div class="pull-quote"><p>${block.quote}</p></div>`;
+                    if (block.p) return `<p class="${block.lede ? 'lede' : ''}">${block.p}</p>`;
+                    return '';
+                }).join('');
+
+                const imgSrc = p.img || '';
+                const missingClass = imgSrc ? '' : 'img-missing';
+                const figureHtml = `<img src="${imgSrc}" alt="${p.title}" loading="lazy" onerror="this.closest('figure').classList.add('img-missing');"><span class="img-placeholder-label">Image not set — No. ${p.num}</span>`;
+
+                const faqsHtml = (p.faqs && p.faqs.length)
+                    ? `<div class="panel-faqs">
+                        <div class="faqs-heading">Frequently Asked Questions</div>
+                        ${p.faqs.map(f => `
+                        <div class="faq-item">
+                          <div class="faq-q">${f.question}</div>
+                          <div class="faq-a">${f.answer}</div>
+                        </div>`).join('')}
+                       </div>`
+                    : '';
+
+                entry.innerHTML = `
+        <div class="entry-summary" data-toggle>
+          <div class="idx-num">No. ${p.num}</div>
+          <div class="idx-main">
+            <span class="cat">${p.cats.map(c => `<a href="blog.html?cat=${encodeURIComponent(c)}" onclick="event.stopPropagation()">${c}</a>`).join(' · ')}</span>
+            <h3>${p.title}</h3>
+            <p>${p.dek}</p>
+          </div>
+          <div class="idx-meta">${p.readMins} min read</div>
+          <div class="toggle-icon">+</div>
+        </div>
+        <div class="panel-wrap">
+          <div class="panel-inner">
+            <div class="panel">
+              <figure class="has-photo ${missingClass}">${figureHtml}</figure>
+              ${bodyHtml}
+              ${faqsHtml}
+              ${p.cta && p.cta.text ? `
+              <div class="panel-cta">
+                <p>${p.cta.text}</p>
+                <a class="cta-link" href="${p.cta.href}">${p.cta.label} →</a>
+              </div>` : ''}
+              <a class="permalink" href="post?slug=${p.slug}">§ open this article on its own page</a>
+            </div>
+          </div>
+        </div>
+      `;
+                list.appendChild(entry);
+                entry.querySelector('[data-toggle]').addEventListener('click', () => {
+                    entry.classList.toggle('open');
+                });
+            });
+
+            const hashSlug = location.hash.replace('#post-', '');
+            const targetId = hashSlug ? `post-${hashSlug}` : (VISIBLE_LIST[0] ? `post-${VISIBLE_LIST[0].slug}` : null);
+            const target = targetId ? document.getElementById(targetId) : null;
+            if (target) {
+                target.classList.add('open');
+                if (hashSlug) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            }
+        }
+
+        loadAndRenderPosts();
+
+        window.addEventListener('hashchange', () => {
+            const slug = location.hash.replace('#post-', '');
+            const el = document.getElementById(`post-${slug}`);
+            if (el) {
+                el.classList.add('open');
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+    </script>
+    <script>
+        document.querySelectorAll('a[href*="wa.me"], a[href*="instagram.com"], a[href*="facebook.com"], a[href*="tiktok.com"], a[href*="youtube.com"], a[href*="twitter.com"], a[href*="x.com"], a[href*="linkedin.com"]').forEach(function (link) {
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener');
+        });
+    </script>
+    <script src="responsive.js"></script>
+    
+</body>
+
+</html>

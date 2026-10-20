@@ -1,0 +1,1097 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>KADIS Admin — Products</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <style>
+        :root {
+            --bg: #0B0C0F; --bg-2: #131519; --bg-3: #1A1D22; --bg-4: #20232A;
+            --ink: #EDEEEC; --ink-dim: #9A9FA8; --ink-dimmer: #5C616A;
+            --line: rgba(255, 255, 255, .07); --line-bright: rgba(255, 255, 255, .13);
+            --amber: #D9772E; --amber-soft: #E8A15E; --moss: #A9B84C; --danger: #E05252; --blue: #5B9BD5;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--ink); font-family: 'Manrope', sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+        h1, h2, h3 { font-family: 'Sora', sans-serif; letter-spacing: -.02em; }
+        .mono { font-family: 'Space Mono', monospace; }
+        a { color: inherit; }
+        input, textarea, select, button { font-family: inherit; font-size: 14px; color: var(--ink); }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+        [hidden] { display: none !important; }
+
+        header { border-bottom: 1px solid var(--line); padding: 14px 0; position: sticky; top: 0; background: rgba(11, 12, 15, .92); backdrop-filter: blur(10px); z-index: 20; }
+        .head-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .brand { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+        .brand span { color: var(--amber); }
+        .brand small { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 400; color: var(--ink-dim); margin-left: 8px; letter-spacing: .08em; text-transform: uppercase; }
+        .user-chip { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-dim); }
+        .role-pill { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line-bright); }
+        .role-pill.admin { color: var(--amber-soft); border-color: rgba(217, 119, 46, .5); background: rgba(217, 119, 46, .1); }
+        .role-pill.uploader { color: var(--moss); border-color: rgba(169, 184, 76, .45); background: rgba(169, 184, 76, .08); }
+
+        .btn { background: var(--bg-3); border: 1px solid var(--line-bright); color: var(--ink); padding: 9px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: .15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { border-color: var(--amber); }
+        .btn.primary { background: var(--amber); border-color: var(--amber); color: #120a03; }
+        .btn.primary:hover { background: var(--amber-soft); }
+        .btn.danger { color: var(--danger); border-color: rgba(224, 82, 82, .4); }
+        .btn.danger:hover { background: rgba(224, 82, 82, .1); border-color: var(--danger); }
+        .btn.sm { padding: 6px 11px; font-size: 12.5px; border-radius: 8px; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+        .panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: 18px; }
+        .panel h2 { font-size: 18px; margin-bottom: 4px; }
+        .panel .sub { color: var(--ink-dim); font-size: 13px; margin-bottom: 16px; }
+
+        /* login */
+        .login-box { max-width: 400px; margin: 9vh auto 0; }
+        .field { margin-bottom: 16px; }
+        .field label, .lbl { display: block; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 6px; }
+        .field label .req, .lbl .req { color: var(--amber); }
+        .hint { font-size: 12px; color: var(--ink-dimmer); margin-top: 5px; }
+        input[type=text], input[type=email], input[type=password], input[type=number], input[type=url], input[type=search], select, textarea {
+            width: 100%; background: var(--bg); border: 1px solid var(--line-bright); border-radius: 10px; padding: 11px 13px; outline: none; transition: border-color .15s;
+        }
+        input:focus, select:focus, textarea:focus, .editor:focus { border-color: var(--amber); }
+        /* tags: type, press Enter, becomes a chip */
+        .tag-input-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--line-bright); border-radius: 10px; padding: 8px 10px; transition: border-color .15s; }
+        .tag-input-wrap:focus-within { border-color: var(--amber); }
+        #tagChips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag-chip { display: inline-flex; align-items: center; gap: 7px; font-family: 'Space Mono', monospace; font-size: 12px; color: var(--amber-soft); background: rgba(217, 119, 46, .12); border: 1px solid rgba(217, 119, 46, .3); padding: 4px 6px 4px 12px; border-radius: 99px; }
+        .tag-chip button { background: none; border: none; color: var(--amber-soft); cursor: pointer; font-size: 13px; line-height: 1; padding: 2px 4px; opacity: .7; }
+        .tag-chip button:hover { opacity: 1; color: var(--danger); }
+        .tag-input-wrap input[type=text] { flex: 1; min-width: 160px; width: auto; background: transparent; border: none; border-radius: 0; padding: 6px 2px; }
+        select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%239A9FA8' stroke-width='2'%3E%3Cpath d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
+        .msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
+        .msg.error { color: var(--danger); } .msg.ok { color: var(--moss); }
+
+        /* tabs */
+        .tabs { display: flex; gap: 6px; margin-top: 18px; flex-wrap: wrap; }
+        .tab { background: transparent; border: 1px solid var(--line); color: var(--ink-dim); padding: 9px 16px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .tab.active { background: var(--bg-3); color: var(--ink); border-color: var(--amber); }
+        .tab .count { font-family: 'Space Mono', monospace; font-size: 11px; opacity: .7; margin-left: 5px; }
+
+        /* list */
+        .toolbar { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .prod-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); margin-bottom: 10px; }
+        .prod-row:hover { border-color: var(--line-bright); }
+        .thumb { width: 64px; height: 64px; border-radius: 10px; background: var(--bg-3) center/cover no-repeat; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink-dimmer); font-size: 11px; overflow: hidden; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .p-name { font-weight: 700; font-size: 14.5px; line-height: 1.3; margin-bottom: 3px; }
+        .p-meta { font-size: 12.5px; color: var(--ink-dim); display: flex; flex-wrap: wrap; gap: 4px 12px; }
+        .p-by { font-size: 12px; color: var(--ink-dimmer); margin-top: 3px; }
+        .p-by b { color: var(--amber-soft); font-weight: 600; }
+        .p-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .pill { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line-bright); color: var(--ink-dim); white-space: nowrap; }
+        .pill.ok { color: var(--moss); border-color: rgba(169, 184, 76, .4); }
+        .pill.warn { color: var(--amber-soft); border-color: rgba(217, 119, 46, .45); }
+        .pill.bad { color: var(--danger); border-color: rgba(224, 82, 82, .45); }
+        .empty { text-align: center; color: var(--ink-dim); padding: 40px 10px; }
+
+        /* form */
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .section-title { font-family: 'Sora', sans-serif; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-soft); margin: 26px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+        .check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; cursor: pointer; color: var(--ink); }
+        .check input { width: 17px; height: 17px; accent-color: var(--amber); }
+        .img-box { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+        .img-preview { width: 160px; height: 160px; border-radius: 14px; border: 1px dashed var(--line-bright); background: var(--bg) center/cover no-repeat; display: grid; place-items: center; color: var(--ink-dimmer); font-size: 12px; text-align: center; padding: 8px; overflow: hidden; flex: none; }
+        .img-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .img-controls { flex: 1; min-width: 240px; }
+        .counter { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--ink-dimmer); text-align: right; margin-top: 5px; }
+        .counter.good { color: var(--moss); } .counter.low { color: var(--amber-soft); }
+
+        .editor-wrap { border: 1px solid var(--line-bright); border-radius: 12px; background: var(--bg); overflow: hidden; }
+        .editor-wrap:focus-within { border-color: var(--amber); }
+        .toolbar-ed { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); background: var(--bg-2); position: sticky; top: 64px; z-index: 5; }
+        .toolbar-ed button { background: transparent; border: 1px solid transparent; color: var(--ink-dim); min-width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-weight: 700; padding: 0 9px; }
+        .toolbar-ed button:hover { background: var(--bg-4); color: var(--ink); }
+        .toolbar-ed .sep { width: 1px; background: var(--line-bright); margin: 4px 4px; }
+        .editor { min-height: 280px; padding: 16px; outline: none; font-size: 15px; line-height: 1.7; }
+        .editor:empty::before { content: attr(data-placeholder); color: var(--ink-dimmer); pointer-events: none; }
+        .editor h3 { font-size: 17px; margin: 18px 0 6px; color: var(--amber-soft); }
+        .editor h4 { font-size: 15px; margin: 14px 0 4px; }
+        .editor p { margin: 0 0 12px; }
+        .editor ul, .editor ol { margin: 0 0 12px 22px; }
+        .editor li { margin-bottom: 4px; }
+        .editor a { color: var(--blue); }
+        .editor blockquote { border-left: 3px solid var(--amber); padding-left: 12px; color: var(--ink-dim); margin: 0 0 12px; }
+
+        .spec-row { display: grid; grid-template-columns: 1fr 1.4fr auto; gap: 8px; margin-bottom: 8px; }
+        .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg-2) 30%); padding-bottom: 6px; }
+
+        /* tables */
+        .tbl-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        th { text-align: left; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); padding: 8px 10px; border-bottom: 1px solid var(--line-bright); white-space: nowrap; }
+        td { padding: 11px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+        td .dim { color: var(--ink-dim); font-size: 12px; }
+
+        /* toast + modal */
+        .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-4); border: 1px solid var(--line-bright); padding: 12px 20px; border-radius: 12px; opacity: 0; transition: .25s; z-index: 100; pointer-events: none; max-width: 90vw; font-size: 14px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { border-color: var(--danger); color: #ffb0b0; } .toast.ok { border-color: var(--moss); }
+        .modal-bg { position: fixed; inset: 0; background: rgba(0, 0, 0, .6); backdrop-filter: blur(6px); z-index: 90; display: grid; place-items: center; padding: 20px; }
+        .modal { background: var(--bg-2); border: 1px solid var(--line-bright); border-radius: 16px; padding: 24px; max-width: 440px; width: 100%; }
+        .modal h3 { margin-bottom: 8px; } .modal p { color: var(--ink-dim); font-size: 14px; margin-bottom: 18px; }
+        .modal .row { display: flex; gap: 10px; justify-content: flex-end; }
+
+        @media (max-width: 760px) {
+            .toolbar, .grid2, .grid3 { grid-template-columns: 1fr; }
+            .prod-row { grid-template-columns: 56px 1fr; }
+            .thumb { width: 56px; height: 56px; }
+            .p-actions { grid-column: 1 / -1; justify-content: flex-start; }
+            .spec-row { grid-template-columns: 1fr auto; } .spec-row input:nth-child(2) { grid-column: 1; }
+            .toolbar-ed { top: 56px; }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="wrap head-row">
+            <div class="brand">KADIS<span>.</span><small>Products</small></div>
+            <div class="user-chip" id="userChip" hidden>
+                <span id="userName"></span>
+                <span class="role-pill" id="roleChip"></span>
+                <a class="btn sm" href="index.html" target="_blank" rel="noopener">View site</a>
+                <button class="btn sm" id="logoutBtn" type="button">Sign out</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap" style="padding-bottom:80px">
+
+        <!-- LOGIN -->
+        <section id="loginView" class="login-box panel">
+            <h2>Sign in</h2>
+            <p class="sub">Use the account the super admin created for you.</p>
+            <div class="field"><label for="loginEmail">Email</label><input type="email" id="loginEmail" autocomplete="username"></div>
+            <div class="field"><label for="loginPassword">Password</label><input type="password" id="loginPassword" autocomplete="current-password"></div>
+            <button class="btn primary" id="loginBtn" type="button" style="width:100%;justify-content:center">Sign in →</button>
+            <div class="msg" id="loginMsg"></div>
+        </section>
+
+        <!-- NO ACCESS -->
+        <section id="deniedView" class="login-box panel" hidden>
+            <h2>No product access</h2>
+            <p class="sub" id="deniedText">This account hasn't been given access to manage products. Ask the super admin to add you as an uploader.</p>
+            <button class="btn" id="deniedLogout" type="button">Sign out</button>
+        </section>
+
+        <!-- APP -->
+        <section id="appView" hidden>
+            <div class="tabs" id="tabs">
+                <button class="tab active" data-tab="list" type="button">Products <span class="count" id="countProducts"></span></button>
+                <button class="tab" data-tab="edit" type="button" id="tabEdit">+ Add product</button>
+                <button class="tab" data-tab="activity" type="button" data-admin hidden>Activity log</button>
+                <button class="tab" data-tab="team" type="button" data-admin hidden>Uploaders</button>
+            </div>
+
+            <!-- LIST -->
+            <div class="panel" id="view-list">
+                <h2 id="listTitle">Your products</h2>
+                <p class="sub" id="listSub"></p>
+                <div class="toolbar">
+                    <input type="search" id="fSearch" placeholder="Search name or brand…">
+                    <select id="fCat"></select>
+                    <select id="fStatus">
+                        <option value="">Any status</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft (hidden)</option>
+                        <option value="out">Out of stock</option>
+                        <option value="thin">Needs a fuller description</option>
+                    </select>
+                    <select id="fBy" data-admin hidden></select>
+                </div>
+                <div id="listBody"><div class="empty">Loading…</div></div>
+            </div>
+
+            <!-- EDIT -->
+            <div class="panel" id="view-edit" hidden>
+                <h2 id="formTitle">Add a product</h2>
+                <p class="sub" id="formSub">Fill in the details below. Fields marked <span style="color:var(--amber)">*</span> are required.</p>
+
+                <div class="section-title" style="margin-top:6px">Basics</div>
+                <div class="grid2">
+                    <div class="field"><label for="fCategory">Category page <span class="req">*</span></label><select id="fCategory"></select>
+                        <div class="hint">The product appears on this page of the website.</div></div>
+                    <div class="field"><label for="fSub">Sub-category</label><input type="text" id="fSub" list="subList" maxlength="60" placeholder="e.g. Phone Accessories"><datalist id="subList"></datalist></div>
+                </div>
+                <div class="grid2">
+                    <div class="field"><label for="fName">Product name <span class="req">*</span></label><input type="text" id="fName" maxlength="160" placeholder="e.g. Baseus 20W USB-C Fast Charger"></div>
+                    <div class="field"><label for="fBrand">Brand</label><input type="text" id="fBrand" list="brandList" maxlength="60" placeholder="e.g. Baseus"><datalist id="brandList"></datalist></div>
+                </div>
+                <div class="field"><label for="fTagEntry">Tags</label>
+                    <div class="tag-input-wrap" id="tagInputWrap"><div id="tagChips"></div><input type="text" id="fTagEntry" maxlength="30" placeholder="Type a tag and press Enter…" autocomplete="off"></div>
+                    <div class="hint">Type a tag and press Enter to add it. Click ✕ on a tag to remove it. Up to 8 tags.</div></div>
+
+                <div class="section-title">Price &amp; availability</div>
+                <div class="grid3">
+                    <div class="field"><label for="fPrice">Price (₦) <span class="req">*</span></label><input type="number" id="fPrice" min="0" step="0.01" inputmode="decimal"></div>
+                    <div class="field"><label for="fOld">Old price (₦)</label><input type="number" id="fOld" min="0" step="0.01" inputmode="decimal"><div class="hint">Optional. Shows struck-through next to the price.</div></div>
+                    <div class="field"><label for="fTag">Label on the picture</label>
+                        <select id="fTag"><option value="">None</option><option>NEW</option><option>SALE</option><option>POPULAR</option><option>HOT</option></select></div>
+                </div>
+                <div style="display:flex;gap:22px;flex-wrap:wrap;margin-bottom:6px">
+                    <label class="check"><input type="checkbox" id="fOnRequest"> Price on request (hide the price)</label>
+                    <label class="check"><input type="checkbox" id="fFrom"> Show as “From ₦…”</label>
+                </div>
+                <div class="field" id="noteField" hidden style="margin-top:12px"><label for="fNote">Text to show instead of a price</label><input type="text" id="fNote" maxlength="60" placeholder="Contact for price"></div>
+                <div class="grid2" style="margin-top:14px">
+                    <div class="field"><label for="fStock">Stock</label><select id="fStock"><option value="in_stock">In stock</option><option value="out_of_stock">Out of stock</option></select></div>
+                    <div class="field"><label for="fPublished">Visibility</label><select id="fPublished"><option value="true">Published (visible on the website)</option><option value="false">Draft (hidden, only you and the super admin see it)</option></select></div>
+                </div>
+                <div class="field" id="orderField" data-admin hidden><label for="fOrder">Display position (super admin)</label><input type="number" id="fOrder" step="1" value="0"><div class="hint">Lower numbers appear first on the page. Leave at 0 to put new products at the top.</div></div>
+
+                <div class="section-title">Picture</div>
+                <div class="img-box">
+                    <div class="img-preview" id="imgPreview">No picture yet</div>
+                    <div class="img-controls">
+                        <label class="btn" for="fFile" style="cursor:pointer">Upload picture</label>
+                        <input type="file" id="fFile" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+                        <button class="btn sm danger" id="imgRemove" type="button" hidden style="margin-left:8px">Remove</button>
+                        <div class="hint" style="margin:8px 0 14px">JPG, PNG or WebP. Big pictures are shrunk automatically. A clear, square, plain-background photo looks best.</div>
+                        <div class="field" style="margin:0"><label for="fImgUrl">…or paste a picture link</label><input type="url" id="fImgUrl" placeholder="https://…"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Description</div>
+                <div class="field">
+                    <label for="fShort">Short description (shown on the product card)</label>
+                    <input type="text" id="fShort" maxlength="160" placeholder="One line that sells the product">
+                    <div class="counter" id="shortCount">0 / 160</div>
+                </div>
+                <div class="field">
+                    <span class="lbl">Full description <span class="req">*</span></span>
+                    <div class="editor-wrap">
+                        <div class="toolbar-ed" id="edToolbar">
+                            <button type="button" data-cmd="formatBlock" data-val="h3" title="Heading">H</button>
+                            <button type="button" data-cmd="formatBlock" data-val="h4" title="Sub-heading" style="font-size:12px">h</button>
+                            <button type="button" data-cmd="formatBlock" data-val="p" title="Normal text">¶</button>
+                            <span class="sep"></span>
+                            <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+                            <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+                            <button type="button" data-cmd="underline" title="Underline"><u>U</u></button>
+                            <span class="sep"></span>
+                            <button type="button" data-cmd="insertUnorderedList" title="Bullet list">• List</button>
+                            <button type="button" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+                            <button type="button" data-cmd="blockquote" title="Quote / note">“ ”</button>
+                            <button type="button" data-cmd="link" title="Add link">Link</button>
+                            <span class="sep"></span>
+                            <button type="button" data-cmd="removeFormat" title="Clear formatting">Clear</button>
+                            <button type="button" id="edOutline" title="Insert a ready-made outline" style="color:var(--amber-soft)">+ Outline</button>
+                        </div>
+                        <div class="editor" id="editor" contenteditable="true" data-placeholder="Write the full details here: what the product is, who it is for, what it can do, how it is used, what comes in the box, warranty and delivery. The more useful detail you give, the more people buy. Tap “+ Outline” for a ready-made structure."></div>
+                    </div>
+                    <div class="counter" id="descCount"></div>
+                </div>
+
+                <div class="section-title">Specifications (optional)</div>
+                <div id="specRows"></div>
+                <button class="btn sm" id="addSpec" type="button">+ Add specification</button>
+                <div class="hint" style="margin-top:8px">Good for things like Power, Voltage, Size, Colour, Warranty, Compatibility.</div>
+
+                <div class="form-actions">
+                    <button class="btn primary" id="saveBtn" type="button">Save product</button>
+                    <button class="btn" id="cancelBtn" type="button">Cancel</button>
+                    <button class="btn danger" id="deleteBtn" type="button" hidden style="margin-left:auto">Delete product</button>
+                </div>
+                <div class="msg" id="formMsg"></div>
+            </div>
+
+            <!-- ACTIVITY (super admin) -->
+            <div class="panel" id="view-activity" hidden>
+                <h2>Activity log</h2>
+                <p class="sub">Every product added, changed or deleted, and who did it. This is recorded by the database itself, so it can't be edited from here.</p>
+                <div class="toolbar" style="grid-template-columns:1fr 1fr auto">
+                    <select id="aBy"></select>
+                    <select id="aAction"><option value="">All actions</option><option value="created">Added</option><option value="updated">Changed</option><option value="deleted">Deleted</option></select>
+                    <button class="btn" id="aReload" type="button">Refresh</button>
+                </div>
+                <div class="tbl-wrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Product</th><th>What changed</th></tr></thead><tbody id="aBody"></tbody></table></div>
+                <div style="text-align:center;margin-top:14px"><button class="btn sm" id="aMore" type="button" hidden>Load more</button></div>
+            </div>
+
+            <!-- TEAM (super admin) -->
+            <div class="panel" id="view-team" hidden>
+                <h2>Uploaders</h2>
+                <p class="sub">People who can add products. An uploader can only edit or delete the products they added themselves. Suspending someone cuts off their product access immediately; it does not affect their blog access. A blogger you give upload access to can do both.</p>
+                <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Products</th><th>Last sign-in</th><th></th></tr></thead><tbody id="tBody"></tbody></table></div>
+
+                <div class="section-title">Give someone uploader access</div>
+                <p class="sub" style="margin-bottom:12px"><b>Step 1:</b> if they don't have a login yet, go to <span class="mono">Authentication → Users → Add user</span> in Supabase, enter their email and a password (tick “Auto confirm user”). Existing bloggers already have one. <b>Step 2:</b> enter their email here.</p>
+                <div class="grid2">
+                    <div class="field"><label for="gEmail">Their email</label><input type="email" id="gEmail" placeholder="name@example.com"></div>
+                    <div class="field"><label for="gName">Their name (shown as “Added by”)</label><input type="text" id="gName" maxlength="60" placeholder="e.g. Ada Okafor"></div>
+                </div>
+                <button class="btn primary" id="grantBtn" type="button">Give uploader access</button>
+                <div class="msg" id="grantMsg"></div>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        /* ============================================================
+           CONFIG
+           ============================================================ */
+        const SUPABASE_URL = "https://xjaieymgmhberbkbucrh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_r86lqj5QiI3qTgXicj7Ryg_AWkXZXu6";
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // key = category stored in the database = the page file name (without .html)
+        const CATEGORIES = [
+            { key: 'gadgets', label: 'Gadgets & Accessories' },
+            { key: 'electronic_converter', label: 'Electronic Converters & OTG Adapters' },
+            { key: 'cables', label: 'Cables, Wires & Adapters' },
+            { key: 'computer', label: 'Computer Accessories' },
+            { key: 'ict_tools', label: 'ICT Engineering Tools' },
+            { key: 'ps', label: 'Games & Consoles' },
+            { key: 'ringlights', label: 'Ring Lights' },
+            { key: 'satellite', label: 'TV & Satellite Decoders' },
+            { key: 'smart', label: 'Smart Home Automation' },
+            { key: 'solar', label: 'Solar & Power' },
+            { key: 'wifi', label: 'WiFi, Mifi & Routers' },
+            { key: 'cctv_gadgets', label: 'CCTV & Security Gadgets' },
+            { key: 'security_surveillance', label: 'Security and Surveillance System' },
+            { key: 'biometric_access', label: 'Biometric Devices and Access Control System Solutions' },
+            { key: 'smart_door_locks', label: 'Smart Door Locks' },
+            { key: 'smart_lock_automation', label: 'Smart Lock and Home Automation' },
+            { key: 'time_attendance', label: 'Time Attendance System' },
+            { key: 'access_control', label: 'Access Control System' },
+            { key: 'event_security', label: 'Event Security, Networking and Monitoring' },
+            { key: 'fire_alarm', label: 'Fire Alarm, Smoke Detectors and Intruder Alarm System' },
+            { key: 'media_content', label: 'Media Accessories and Content Creation Equipment' },
+            { key: 'gate_motors', label: 'Automatic Gate Motors and Accessories' },
+            { key: 'electric_fence', label: 'Electric Fence Systems and Accessories' },
+            { key: 'intercom_pabx', label: 'Video Door Phone, Intercom and PABX' },
+            { key: 'satellite_tv_accessories', label: 'Satellite TV, DSTV, GOtv and Starlink Accessories' },
+            { key: 'solar_inverters', label: 'Solar, Inverters and Electrical Installation' },
+            { key: 'networking_poe', label: 'Networking, PoE & Structured Cabling' },
+            { key: 'aircon_electrical', label: 'Air Conditioning and Electrical Fittings' },
+            { key: 'vehicle_tracking', label: 'Vehicle Tracking and Security' }
+        ];
+        const CAT_LABEL = Object.fromEntries(CATEGORIES.map(c => [c.key, c.label]));
+
+        const MIN_DESC_CHARS = 400;   // a published product's full description must have at least this many characters
+        const MAX_IMG_SIDE = 1200;    // pictures are shrunk to this size before upload
+        const BUCKET = 'product-images';
+
+        const SAFE_HTML = {
+            ALLOWED_TAGS: ['p', 'br', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'a', 'blockquote'],
+            ALLOWED_ATTR: ['href', 'target', 'rel']
+        };
+
+        /* ============================================================
+           HELPERS
+           ============================================================ */
+        const $ = (id) => document.getElementById(id);
+        let currentTags = [];   // tags chosen for the product being edited
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const naira = (n) => '₦' + Number(n).toLocaleString('en-NG', { maximumFractionDigits: 2 });
+        const safeUrl = (u) => /^(https?:\/\/|\/|\.\/|images\/)/i.test(String(u || '').trim()) ? String(u).trim() : '';
+        const isAdmin = () => state.user.role === 'admin';
+
+        let toastTimer;
+        function toast(text, kind) {
+            const t = $('toast');
+            t.textContent = text; t.className = 'toast show ' + (kind || '');
+            clearTimeout(toastTimer); toastTimer = setTimeout(() => t.className = 'toast', 3600);
+        }
+
+        function ago(iso) {
+            const s = Math.max(1, Math.round((Date.now() - new Date(iso)) / 1000));
+            if (s < 60) return 'just now';
+            if (s < 3600) return Math.round(s / 60) + ' min ago';
+            if (s < 86400) return Math.round(s / 3600) + ' hr ago';
+            if (s < 86400 * 30) return Math.round(s / 86400) + ' d ago';
+            return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+        const exact = (iso) => new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        function confirmBox(title, text, okLabel, danger) {
+            return new Promise(resolve => {
+                const bg = document.createElement('div');
+                bg.className = 'modal-bg';
+                bg.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h3>${esc(title)}</h3><p>${esc(text)}</p>
+                    <div class="row"><button class="btn" data-r="0" type="button">Cancel</button><button class="btn ${danger ? 'danger' : 'primary'}" data-r="1" type="button">${esc(okLabel)}</button></div></div>`;
+                bg.addEventListener('click', e => {
+                    const r = e.target.dataset && e.target.dataset.r;
+                    if (r === '0' || r === '1' || e.target === bg) { bg.remove(); resolve(r === '1'); }
+                });
+                document.body.appendChild(bg);
+                bg.querySelector('[data-r="0"]').focus();
+            });
+        }
+
+        /* ============================================================
+           STATE + AUTH
+           ============================================================ */
+        const state = {
+            user: { id: null, email: '', role: null, name: '' },
+            products: [], activity: [], activityOffset: 0,
+            editingId: null, editingRow: null,
+            imageFile: null, imageUrl: '', originalImageUrl: '',
+            dirty: false, tab: 'list', originalDesc: ''
+        };
+
+        async function login() {
+            const email = $('loginEmail').value.trim(), password = $('loginPassword').value;
+            const btn = $('loginBtn'), msg = $('loginMsg');
+            msg.className = 'msg'; msg.textContent = '';
+            if (!email || !password) { msg.className = 'msg error'; msg.textContent = 'Enter your email and password.'; return; }
+            btn.disabled = true; btn.textContent = 'Signing in…';
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+            btn.disabled = false; btn.textContent = 'Sign in →';
+            if (error) { msg.className = 'msg error'; msg.textContent = error.message; return; }
+            await boot();
+        }
+
+        async function logout() { await sb.auth.signOut(); location.reload(); }
+
+        async function boot() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { show('loginView'); return; }
+
+            // the database decides the role; suspended or unknown accounts get null
+            const { data: role, error } = await sb.rpc('kadis_role');
+            if (error) { console.error(error); }
+            const u = session.user;
+            state.user.id = u.id; state.user.email = u.email;
+
+            if (role !== 'admin' && role !== 'uploader') {
+                $('deniedText').textContent = error
+                    ? 'Could not check your access. Make sure the database setup script has been run, then try again.'
+                    : "This account hasn't been given access to manage products (or it has been suspended). Ask the super admin to add you as an uploader.";
+                show('deniedView');
+                return;
+            }
+            state.user.role = role;
+
+            const { data: prof } = await sb.from('profiles').select('display_name').eq('id', u.id).maybeSingle();
+            state.user.name = (prof && prof.display_name) || u.email;
+
+            $('userName').textContent = state.user.name;
+            const rc = $('roleChip');
+            rc.textContent = role === 'admin' ? 'Super admin' : 'Uploader';
+            rc.className = 'role-pill ' + role;
+            $('userChip').hidden = false;
+            document.querySelectorAll('[data-admin]').forEach(el => el.hidden = role !== 'admin');
+
+            $('listTitle').textContent = role === 'admin' ? 'All products' : 'Your products';
+            $('listSub').textContent = role === 'admin'
+                ? 'Every product on the website, including who added it. You can edit or remove any of them.'
+                : 'The products you have added. You can edit or delete these. Imported and other people’s products are not shown here.';
+
+            fillCategorySelects();
+            show('appView');
+            switchTab('list', true);
+            await loadProducts();
+        }
+
+        function show(id) {
+            ['loginView', 'deniedView', 'appView'].forEach(v => $(v).hidden = v !== id);
+        }
+
+        /* ============================================================
+           TABS
+           ============================================================ */
+        async function switchTab(tab, force) {
+            if (!force && state.tab === 'edit' && tab !== 'edit' && state.dirty) {
+                if (!(await confirmBox('Leave without saving?', 'You have unsaved changes on this product. They will be lost.', 'Leave', true))) return;
+            }
+            state.tab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            ['list', 'edit', 'activity', 'team'].forEach(v => $('view-' + v).hidden = v !== tab);
+            if (tab === 'activity') { (async () => { if ($('aBy').options.length < 2) await loadTeam(); loadActivity(true); })(); }
+            if (tab === 'team') loadTeam();
+            if (tab === 'list') { state.dirty = false; }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ============================================================
+           PRODUCT LIST
+           ============================================================ */
+        function fillCategorySelects() {
+            $('fCat').innerHTML = '<option value="">All categories</option>' + CATEGORIES.map(c => `<option value="${c.key}">${esc(c.label)}</option>`).join('');
+            $('fCategory').innerHTML = '<option value="">Choose a category…</option>' + CATEGORIES.map(c => `<option value="${c.key}">${esc(c.label)}</option>`).join('');
+        }
+
+        async function loadProducts() {
+            $('listBody').innerHTML = '<div class="empty">Loading…</div>';
+            let q = sb.from('products')
+                .select('id,legacy_id,category,subcategory,brand,name,price,price_note,old_price,price_prefix,tag,tags,status,is_published,image_url,description_length,created_by,created_by_name,updated_by_name,created_at,updated_at')
+                .order('updated_at', { ascending: false })
+                .range(0, 1999);
+            if (!isAdmin()) q = q.eq('created_by', state.user.id);
+            const { data, error } = await q;
+            if (error) {
+                $('listBody').innerHTML = `<div class="empty">Couldn't load products: ${esc(error.message)}</div>`;
+                return;
+            }
+            state.products = data || [];
+            $('countProducts').textContent = state.products.length;
+
+            if (isAdmin()) {
+                const names = new Map();
+                state.products.forEach(p => { const k = p.created_by || 'legacy'; if (!names.has(k)) names.set(k, p.created_by ? (p.created_by_name || 'Unknown') : 'Imported (original catalogue)'); });
+                const cur = $('fBy').value;
+                $('fBy').innerHTML = '<option value="">Added by anyone</option>' + [...names].map(([k, n]) => `<option value="${esc(k)}">${esc(n)}</option>`).join('');
+                $('fBy').value = names.has(cur) ? cur : '';
+            }
+            renderList();
+            refreshSuggestions();
+        }
+
+        const isThin = (p) => typeof p.description_length === 'number' && p.description_length < MIN_DESC_CHARS;
+
+        function renderList() {
+            const q = $('fSearch').value.trim().toLowerCase();
+            const cat = $('fCat').value, st = $('fStatus').value, by = isAdmin() ? $('fBy').value : '';
+            const rows = state.products.filter(p => {
+                if (cat && p.category !== cat) return false;
+                if (by === 'legacy' ? p.created_by : (by && p.created_by !== by)) return false;
+                if (st === 'published' && !p.is_published) return false;
+                if (st === 'draft' && p.is_published) return false;
+                if (st === 'out' && p.status !== 'out_of_stock') return false;
+                if (st === 'thin' && !isThin(p)) return false;
+                if (q && !((p.name || '') + ' ' + (p.brand || '') + ' ' + (p.subcategory || '') + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(q)) return false;
+                return true;
+            });
+
+            if (!rows.length) {
+                $('listBody').innerHTML = state.products.length
+                    ? '<div class="empty">No products match these filters.</div>'
+                    : `<div class="empty">${isAdmin() ? 'No products yet.' : 'You haven’t added any products yet.'}<br><br><button class="btn primary" type="button" data-act="new">+ Add your first product</button></div>`;
+                return;
+            }
+
+            $('listBody').innerHTML = rows.map(p => {
+                const price = p.price == null ? esc(p.price_note || 'Price on request') : esc((p.price_prefix ? p.price_prefix + ' ' : '') + naira(p.price)) + (p.old_price > p.price ? ` <s style="opacity:.55">${esc(naira(p.old_price))}</s>` : '');
+                const img = safeUrl(p.image_url);
+                const by = p.created_by ? `<b>${esc(p.created_by_name || 'Unknown')}</b>` : '<b>Imported</b> (original catalogue)';
+                return `<div class="prod-row" data-id="${esc(p.id)}">
+                    <div class="thumb">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : 'No pic'}</div>
+                    <div>
+                        <div class="p-name">${esc(p.name)}</div>
+                        <div class="p-meta">
+                            <span>${esc(CAT_LABEL[p.category] || p.category)}${p.subcategory ? ' › ' + esc(p.subcategory) : ''}</span>
+                            <span>${price}</span>
+                            ${(p.tags || []).map(t => `<span class="pill">${esc(t)}</span>`).join('')}
+                            ${p.is_published ? '<span class="pill ok">Published</span>' : '<span class="pill warn">Draft</span>'}
+                            ${p.status === 'out_of_stock' ? '<span class="pill bad">Out of stock</span>' : ''}
+                            ${isThin(p) ? '<span class="pill warn" title="The written description is shorter than ' + MIN_DESC_CHARS + ' characters">Needs fuller description</span>' : ''}
+                        </div>
+                        <div class="p-by">${isAdmin() ? `Added by ${by} · ` : ''}Updated ${esc(ago(p.updated_at))}${p.updated_by_name && isAdmin() ? ' by ' + esc(p.updated_by_name) : ''}</div>
+                    </div>
+                    <div class="p-actions">
+                        <button class="btn sm" data-act="edit" type="button">Edit</button>
+                        <a class="btn sm" href="${esc(p.category)}.html" target="_blank" rel="noopener">View page</a>
+                        <button class="btn sm danger" data-act="delete" type="button">Delete</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function refreshSuggestions() {
+            const cat = $('fCategory').value;
+            const subs = new Set(), brands = new Set();
+            state.products.forEach(p => {
+                if (!cat || p.category === cat) { if (p.subcategory) subs.add(p.subcategory); }
+                if (p.brand) brands.add(p.brand);
+            });
+            $('subList').innerHTML = [...subs].sort().map(s => `<option value="${esc(s)}">`).join('');
+            $('brandList').innerHTML = [...brands].sort().map(s => `<option value="${esc(s)}">`).join('');
+        }
+
+        /* ============================================================
+           EDITOR (rich text)
+           ============================================================ */
+        const editor = $('editor');
+        try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) { }
+
+        // turn <div> blocks (what browsers create on Enter) into <p>, drop empties
+        function normaliseHtml(html) {
+            const box = document.createElement('div');
+            box.innerHTML = html;
+            box.querySelectorAll('div').forEach(d => {
+                const p = document.createElement('p');
+                while (d.firstChild) p.appendChild(d.firstChild);
+                d.replaceWith(p);
+            });
+            // stray top-level text → paragraph
+            [...box.childNodes].forEach(n => {
+                if (n.nodeType === 3 && n.textContent.trim()) { const p = document.createElement('p'); p.textContent = n.textContent; n.replaceWith(p); }
+            });
+            return box.innerHTML;
+        }
+
+        function cleanHtml(html) {
+            const out = DOMPurify.sanitize(normaliseHtml(html), SAFE_HTML);
+            const box = document.createElement('div');
+            box.innerHTML = out;
+            box.querySelectorAll('a').forEach(a => {
+                const h = a.getAttribute('href') || '';
+                if (!/^(https?:|mailto:|tel:)/i.test(h)) { a.replaceWith(...a.childNodes); return; }
+                a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener noreferrer');
+            });
+            box.querySelectorAll('p, li, h3, h4, blockquote').forEach(el => { if (!el.textContent.trim()) el.remove(); });
+            return box.innerHTML.trim();
+        }
+
+        const descText = () => (editor.innerText || '').replace(/\s+/g, ' ').trim();
+
+        function updateCounters() {
+            const len = descText().length, words = len ? descText().split(' ').length : 0;
+            const c = $('descCount');
+            const ok = len >= MIN_DESC_CHARS;
+            c.className = 'counter ' + (len === 0 ? '' : ok ? 'good' : 'low');
+            c.textContent = ok
+                ? `${words} words · ${len} characters · good length ✓`
+                : `${words} words · ${len} / ${MIN_DESC_CHARS} characters minimum to publish — add more detail`;
+            $('shortCount').textContent = $('fShort').value.length + ' / 160';
+        }
+
+        $('edToolbar').addEventListener('mousedown', e => e.preventDefault()); // keep the selection in the editor
+        $('edToolbar').addEventListener('click', e => {
+            const b = e.target.closest('button'); if (!b) return;
+            editor.focus();
+            if (b.id === 'edOutline') { insertOutline(); return; }
+            const cmd = b.dataset.cmd, val = b.dataset.val;
+            if (cmd === 'formatBlock') document.execCommand('formatBlock', false, val);
+            else if (cmd === 'blockquote') document.execCommand('formatBlock', false, 'blockquote');
+            else if (cmd === 'link') {
+                const url = prompt('Paste the link (https://…)');
+                if (url && /^https?:\/\//i.test(url.trim())) document.execCommand('createLink', false, url.trim());
+                else if (url) toast('Links must start with https://', 'error');
+            } else document.execCommand(cmd, false, null);
+            markDirty(); updateCounters();
+        });
+
+        function insertOutline() {
+            const html = '<h3>Overview</h3><p>Describe what this product is and who it is for.</p>'
+                + '<h3>Key features</h3><ul><li>Feature one</li><li>Feature two</li><li>Feature three</li></ul>'
+                + '<h3>How it works / how to use it</h3><p>Explain how it is used in everyday life.</p>'
+                + "<h3>What's in the box</h3><ul><li>Item one</li><li>Item two</li></ul>"
+                + '<h3>Warranty &amp; support</h3><p>Tell buyers what warranty, delivery and after-sales support they get.</p>';
+            editor.focus();
+            if (descText()) editor.insertAdjacentHTML('beforeend', html);
+            else editor.innerHTML = html;
+            markDirty(); updateCounters();
+        }
+
+        editor.addEventListener('paste', e => {
+            e.preventDefault();
+            const cd = e.clipboardData;
+            const html = cd.getData('text/html');
+            if (html) document.execCommand('insertHTML', false, cleanHtml(html));
+            else document.execCommand('insertText', false, cd.getData('text/plain'));
+            markDirty(); updateCounters();
+        });
+        editor.addEventListener('input', () => { markDirty(); updateCounters(); });
+
+        /* ============================================================
+           SPECS
+           ============================================================ */
+        function addSpecRow(label, value) {
+            if (document.querySelectorAll('.spec-row').length >= 20) { toast('Up to 20 specifications.', 'error'); return; }
+            const row = document.createElement('div');
+            row.className = 'spec-row';
+            row.innerHTML = '<input type="text" maxlength="60" placeholder="e.g. Power"><input type="text" maxlength="160" placeholder="e.g. 20W"><button class="btn sm danger" type="button" aria-label="Remove">✕</button>';
+            row.children[0].value = label || ''; row.children[1].value = value || '';
+            row.children[2].addEventListener('click', () => { row.remove(); markDirty(); });
+            row.addEventListener('input', markDirty);
+            $('specRows').appendChild(row);
+        }
+        const readSpecs = () => [...document.querySelectorAll('.spec-row')]
+            .map(r => ({ label: r.children[0].value.trim(), value: r.children[1].value.trim() }))
+            .filter(s => s.label && s.value);
+
+        /* ============================================================
+           FORM
+           ============================================================ */
+        function markDirty() { state.dirty = true; }
+
+        function syncPriceFields() {
+            const onReq = $('fOnRequest').checked;
+            $('noteField').hidden = !onReq;
+            ['fPrice', 'fOld', 'fFrom'].forEach(id => $(id).disabled = onReq);
+        }
+
+        function setImagePreview(url) {
+            const box = $('imgPreview');
+            const u = /^blob:/.test(url || '') ? url : safeUrl(url);
+            box.innerHTML = '';
+            if (u) { const i = document.createElement('img'); i.src = u; i.alt = ''; i.onerror = () => { box.textContent = 'Picture could not load'; }; box.appendChild(i); }
+            else box.textContent = 'No picture yet';
+            $('imgRemove').hidden = !u;
+        }
+
+        function resetForm() {
+            state.editingId = null; state.editingRow = null; state.imageFile = null; state.imageUrl = ''; state.originalImageUrl = '';
+            ['fName', 'fBrand', 'fSub', 'fPrice', 'fOld', 'fNote', 'fShort', 'fImgUrl'].forEach(id => $(id).value = '');
+            currentTags = []; renderTagChips(); $('fTagEntry').value = '';
+            $('fCategory').value = ''; $('fTag').value = ''; $('fStock').value = 'in_stock'; $('fPublished').value = 'true'; $('fOrder').value = 0;
+            $('fOnRequest').checked = false; $('fFrom').checked = false; $('fFile').value = '';
+            editor.innerHTML = ''; $('specRows').innerHTML = ''; state.originalDesc = '';
+            $('formMsg').textContent = ''; $('formMsg').className = 'msg';
+            $('deleteBtn').hidden = true;
+            $('formTitle').textContent = 'Add a product';
+            $('formSub').innerHTML = 'Fill in the details below. Fields marked <span style="color:var(--amber)">*</span> are required.';
+            $('saveBtn').textContent = 'Save product';
+            syncPriceFields(); setImagePreview(''); updateCounters(); refreshSuggestions();
+            state.dirty = false;
+        }
+
+        function newProduct() {
+            resetForm();
+            switchTab('edit', true);
+        }
+
+        async function editProduct(id) {
+            const { data: p, error } = await sb.from('products').select('*').eq('id', id).single();
+            if (error || !p) { toast('Could not open that product: ' + (error ? error.message : 'not found'), 'error'); return; }
+            resetForm();
+            state.editingId = p.id; state.editingRow = p;
+            $('formTitle').textContent = 'Edit product';
+            $('formSub').innerHTML = `Last updated ${esc(exact(p.updated_at))}${p.updated_by_name ? ' by ' + esc(p.updated_by_name) : ''}. Fields marked <span style="color:var(--amber)">*</span> are required.`;
+            $('fCategory').value = p.category; $('fSub').value = p.subcategory || ''; $('fBrand').value = p.brand || '';
+            $('fName').value = p.name || '';
+            $('fOnRequest').checked = p.price == null; $('fNote').value = p.price_note || '';
+            $('fPrice').value = p.price == null ? '' : p.price; $('fOld').value = p.old_price == null ? '' : p.old_price;
+            $('fFrom').checked = (p.price_prefix || '').toLowerCase() === 'from';
+            $('fTag').value = p.tag || ''; currentTags = Array.isArray(p.tags) ? p.tags.slice(0, MAX_TAGS) : []; renderTagChips(); $('fTagEntry').value = ''; $('fStock').value = p.status; $('fPublished').value = String(p.is_published);
+            $('fOrder').value = p.sort_order || 0;
+            $('fShort').value = p.short_description || '';
+            editor.innerHTML = cleanHtml(p.full_description || '');
+            state.originalDesc = cleanHtml(editor.innerHTML);
+            (Array.isArray(p.specs) ? p.specs : []).forEach(s => addSpecRow(s.label, s.value));
+            state.imageUrl = p.image_url || ''; state.originalImageUrl = p.image_url || '';
+            $('fImgUrl').value = /\/product-images\//.test(state.imageUrl) ? '' : state.imageUrl;
+            setImagePreview(state.imageUrl);
+            $('deleteBtn').hidden = false;
+            $('saveBtn').textContent = 'Save changes';
+            syncPriceFields(); updateCounters(); refreshSuggestions();
+            state.dirty = false;
+            switchTab('edit', true);
+        }
+
+        /* ---------- pictures ---------- */
+        async function shrinkImage(file) {
+            if (!/^image\/(jpeg|png|webp|gif)$/.test(file.type)) throw new Error('Please choose a JPG, PNG or WebP picture.');
+            if (file.size > 15 * 1024 * 1024) throw new Error('That picture is too large (max 15 MB).');
+            const bmp = await createImageBitmap(file);
+            const scale = Math.min(1, MAX_IMG_SIDE / Math.max(bmp.width, bmp.height));
+            const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+            const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+            const ctx = cv.getContext('2d');
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);   // transparent PNGs get a white background
+            ctx.drawImage(bmp, 0, 0, w, h);
+            let blob = await new Promise(r => cv.toBlob(r, 'image/webp', 0.86));
+            let ext = 'webp';
+            if (!blob || blob.type !== 'image/webp') { blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.86)); ext = 'jpg'; }
+            if (blob.size > 5 * 1024 * 1024) throw new Error('Picture is still over 5 MB after shrinking. Try a smaller one.');
+            return { blob, ext };
+        }
+
+        async function uploadImage(file) {
+            const { blob, ext } = await shrinkImage(file);
+            const path = `${state.user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+            const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000', upsert: false });
+            if (error) throw new Error('Picture upload failed: ' + error.message);
+            return sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        }
+
+        // best-effort cleanup of a picture we uploaded earlier and no longer use
+        async function dropStoredImage(url) {
+            const m = String(url || '').match(/\/storage\/v1\/object\/public\/product-images\/(.+)$/);
+            if (!m) return;
+            try { await sb.storage.from(BUCKET).remove([decodeURIComponent(m[1])]); } catch (e) { }
+        }
+
+        $('fFile').addEventListener('change', async e => {
+            const f = e.target.files[0]; if (!f) return;
+            try {
+                await shrinkImage(f);   // validate now so the person finds out immediately
+                state.imageFile = f; state.imageUrl = ''; $('fImgUrl').value = '';
+                setImagePreview(URL.createObjectURL(f)); markDirty();
+            } catch (err) { toast(err.message, 'error'); e.target.value = ''; }
+        });
+        $('fImgUrl').addEventListener('input', e => {
+            const v = e.target.value.trim();
+            state.imageFile = null; $('fFile').value = '';
+            state.imageUrl = safeUrl(v); setImagePreview(state.imageUrl); markDirty();
+        });
+        $('imgRemove').addEventListener('click', () => {
+            state.imageFile = null; state.imageUrl = ''; $('fFile').value = ''; $('fImgUrl').value = ''; setImagePreview(''); markDirty();
+        });
+
+        /* ---------- save ---------- */
+        function fail(msg) {
+            const m = $('formMsg'); m.className = 'msg error'; m.textContent = msg;
+            toast(msg, 'error'); m.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return false;
+        }
+
+        // ---------- Tags: type a tag, press Enter, it becomes a chip ----------
+        const MAX_TAGS = 8;
+        function renderTagChips() {
+            const box = $('tagChips'); box.innerHTML = '';
+            currentTags.forEach((t, i) => {
+                const chip = document.createElement('span'); chip.className = 'tag-chip';
+                chip.appendChild(document.createTextNode(t + ' '));
+                const b = document.createElement('button'); b.type = 'button';
+                b.setAttribute('aria-label', 'Remove tag ' + t); b.textContent = '✕';
+                b.addEventListener('click', () => { currentTags.splice(i, 1); renderTagChips(); markDirty(); });
+                chip.appendChild(b); box.appendChild(chip);
+            });
+        }
+        function addTagsFromText(text) {
+            let added = false, full = false;
+            String(text || '').split(',').forEach(raw => {
+                const t = raw.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 30);
+                if (!t || currentTags.includes(t)) return;
+                if (currentTags.length >= MAX_TAGS) { full = true; return; }
+                currentTags.push(t); added = true;
+            });
+            if (added) { renderTagChips(); markDirty(); }
+            if (full) toast('You can add up to ' + MAX_TAGS + ' tags per product.', 'error');
+        }
+        function addTagFromEntry() { const el = $('fTagEntry'); addTagsFromText(el.value); el.value = ''; }
+        function readTags() { addTagFromEntry(); return currentTags.slice(); }
+        $('fTagEntry').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTagFromEntry(); }
+            else if (e.key === 'Backspace' && !e.target.value && currentTags.length) { currentTags.pop(); renderTagChips(); markDirty(); }
+        });
+        $('fTagEntry').addEventListener('paste', (e) => {
+            e.preventDefault();
+            addTagsFromText(((e.clipboardData || window.clipboardData).getData('text') || '').replace(/[\r\n]+/g, ','));
+        });
+        $('fTagEntry').addEventListener('blur', addTagFromEntry);
+
+        async function saveProduct() {
+            const msg = $('formMsg'); msg.className = 'msg'; msg.textContent = '';
+            const publish = $('fPublished').value === 'true';
+            const onRequest = $('fOnRequest').checked;
+
+            const category = $('fCategory').value;
+            const name = $('fName').value.trim().replace(/\s+/g, ' ');
+            if (!category) return fail('Choose which category page this product belongs on.');
+            if (name.length < 3) return fail('Enter the product name.');
+
+            let price = null, oldPrice = null;
+            if (!onRequest) {
+                if ($('fPrice').value === '') return fail('Enter the price, or tick “Price on request”.');
+                price = Number($('fPrice').value);
+                if (!(price >= 0)) return fail('The price must be a positive number.');
+                if ($('fOld').value !== '') {
+                    oldPrice = Number($('fOld').value);
+                    if (!(oldPrice > price)) return fail('The old price must be higher than the current price (or leave it empty).');
+                }
+            }
+
+            const html = cleanHtml(editor.innerHTML);
+            const len = descText().length;
+            // new products, and any description that has been edited, must reach the minimum before publishing.
+            // An existing product whose description wasn't touched (e.g. imported ones, when only the price is being fixed) can still be saved.
+            const descTouched = !state.editingId || html !== state.originalDesc;
+            if (publish && len < MIN_DESC_CHARS && descTouched) return fail(`The full description is too short (${len} characters). Please write at least ${MIN_DESC_CHARS} so buyers get real detail — or save it as a Draft for now.`);
+            if (publish && !state.imageFile && !state.imageUrl) return fail('Add a picture (upload one or paste a link), or save it as a Draft.');
+
+            const btn = $('saveBtn'); const label = btn.textContent;
+            btn.disabled = true; btn.textContent = 'Saving…';
+            try {
+                let imageUrl = state.imageUrl;
+                if (state.imageFile) { btn.textContent = 'Uploading picture…'; imageUrl = await uploadImage(state.imageFile); }
+
+                const record = {
+                    category,
+                    subcategory: $('fSub').value.trim() || null,
+                    brand: $('fBrand').value.trim() || null,
+                    name,
+                    price, old_price: oldPrice,
+                    price_note: onRequest ? ($('fNote').value.trim() || 'Contact for price') : null,
+                    price_prefix: !onRequest && $('fFrom').checked ? 'From' : null,
+                    tag: $('fTag').value || null,
+                    tags: readTags(),
+                    status: $('fStock').value,
+                    is_published: publish,
+                    image_url: imageUrl || null,
+                    short_description: $('fShort').value.trim() || null,
+                    full_description: html || null,
+                    specs: readSpecs()
+                };
+                if (isAdmin()) record.sort_order = parseInt($('fOrder').value, 10) || 0;
+
+                btn.textContent = 'Saving…';
+                let res;
+                if (state.editingId) res = await sb.from('products').update(record).eq('id', state.editingId).select('id');
+                else res = await sb.from('products').insert(record).select('id');
+                if (res.error) throw new Error(res.error.message);
+                if (!res.data || !res.data.length) throw new Error('Nothing was saved. You may not have permission to change this product.');
+
+                if (state.editingId && state.originalImageUrl && state.originalImageUrl !== imageUrl) dropStoredImage(state.originalImageUrl);
+
+                state.dirty = false;
+                const stillThin = publish && len < MIN_DESC_CHARS;
+                toast((state.editingId ? 'Changes saved ✓' : 'Product added ✓') + (stillThin ? ' — this product still needs a fuller description.' : ''), 'ok');
+                resetForm();
+                await switchTab('list', true);
+                await loadProducts();
+            } catch (err) {
+                fail(err.message || 'Something went wrong. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = state.editingId ? 'Save changes' : 'Save product';
+            }
+        }
+
+        async function deleteProduct(id, name, imageUrl) {
+            const ok = await confirmBox('Delete this product?', `“${name}” will be removed from the website. This cannot be undone.`, 'Delete', true);
+            if (!ok) return;
+            const { data, error } = await sb.from('products').delete().eq('id', id).select('id');
+            if (error) { toast('Could not delete: ' + error.message, 'error'); return; }
+            if (!data || !data.length) { toast('Nothing was deleted. You may not have permission to remove this product.', 'error'); return; }
+            dropStoredImage(imageUrl);
+            toast('Product deleted', 'ok');
+            state.dirty = false; resetForm();
+            await switchTab('list', true);
+            await loadProducts();
+        }
+
+        /* ============================================================
+           ACTIVITY LOG (super admin)
+           ============================================================ */
+        const ACT_PAGE = 50;
+        async function loadActivity(reset) {
+            if (!isAdmin()) return;
+            if (reset) { state.activity = []; state.activityOffset = 0; $('aBody').innerHTML = '<tr><td colspan="5" class="dim">Loading…</td></tr>'; }
+            let q = sb.from('product_activity').select('*').order('created_at', { ascending: false }).range(state.activityOffset, state.activityOffset + ACT_PAGE - 1);
+            if ($('aBy').value) q = q.eq('actor_id', $('aBy').value);
+            if ($('aAction').value) q = q.eq('action', $('aAction').value);
+            const { data, error } = await q;
+            if (error) { $('aBody').innerHTML = `<tr><td colspan="5">Couldn't load: ${esc(error.message)}</td></tr>`; return; }
+            state.activity = state.activity.concat(data || []);
+            state.activityOffset += (data || []).length;
+            $('aMore').hidden = (data || []).length < ACT_PAGE;
+
+            if (!state.activity.length) { $('aBody').innerHTML = '<tr><td colspan="5" class="dim">Nothing recorded yet.</td></tr>'; return; }
+            const label = { created: ['Added', 'ok'], updated: ['Changed', 'warn'], deleted: ['Deleted', 'bad'] };
+            $('aBody').innerHTML = state.activity.map(a => {
+                const [t, k] = label[a.action] || [a.action, ''];
+                return `<tr>
+                    <td title="${esc(exact(a.created_at))}">${esc(ago(a.created_at))}<div class="dim">${esc(exact(a.created_at))}</div></td>
+                    <td><b>${esc(a.actor_name || 'Unknown')}</b><div class="dim">${esc(a.actor_email || '')}</div></td>
+                    <td><span class="pill ${k}">${t}</span></td>
+                    <td>${esc(a.product_name || '')}<div class="dim">${esc(CAT_LABEL[a.category] || a.category || '')}</div></td>
+                    <td class="dim">${a.changed && a.changed.length ? esc(a.changed.map(f => f.replace(/_/g, ' ')).join(', ')) : '—'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        /* ============================================================
+           TEAM (super admin)
+           ============================================================ */
+        async function loadTeam() {
+            if (!isAdmin()) return;
+            $('tBody').innerHTML = '<tr><td colspan="6" class="dim">Loading…</td></tr>';
+            const { data, error } = await sb.rpc('kadis_list_staff');
+            if (error) { $('tBody').innerHTML = `<tr><td colspan="6">Couldn't load: ${esc(error.message)}</td></tr>`; return; }
+            // fill the "who" filter on the activity tab as well
+            $('aBy').innerHTML = '<option value="">Everyone</option>' + data.map(s => `<option value="${esc(s.id)}">${esc(s.display_name || s.email)}</option>`).join('');
+            $('tBody').innerHTML = data.map(s => {
+                const me = s.id === state.user.id;
+                const btn = s.role === 'uploader'
+                    ? `<button class="btn sm ${s.active ? 'danger' : ''}" data-act="${s.active ? 'suspend' : 'enable'}" data-id="${esc(s.id)}" data-name="${esc(s.display_name || s.email)}" type="button">${s.active ? 'Suspend' : 'Re-enable'}</button>` : '';
+                return `<tr>
+                    <td><b>${esc(s.display_name || '—')}</b>${me ? ' <span class="dim">(you)</span>' : ''}</td>
+                    <td>${esc(s.email)}</td>
+                    <td><span class="pill ${s.role === 'admin' ? 'warn' : 'ok'}">${s.role === 'admin' ? 'Super admin' : 'Uploader'}</span> ${s.also_blogger ? '<span class="pill">Blogger</span>' : ''} ${s.active ? '' : '<span class="pill bad">Uploads suspended</span>'}</td>
+                    <td>${s.product_count}</td>
+                    <td class="dim">${s.last_sign_in ? esc(ago(s.last_sign_in)) : 'never'}</td>
+                    <td style="text-align:right">${btn}</td></tr>`;
+            }).join('') || '<tr><td colspan="6" class="dim">No uploaders yet.</td></tr>';
+        }
+
+        async function grantUploader() {
+            const email = $('gEmail').value.trim(), name = $('gName').value.trim();
+            const m = $('grantMsg'); m.className = 'msg'; m.textContent = '';
+            if (!/^\S+@\S+\.\S+$/.test(email)) { m.className = 'msg error'; m.textContent = 'Enter a valid email.'; return; }
+            if (!name) { m.className = 'msg error'; m.textContent = 'Enter their name. It is shown as “Added by” next to their products.'; return; }
+            $('grantBtn').disabled = true;
+            const { error } = await sb.rpc('kadis_grant_uploader', { p_email: email, p_name: name });
+            $('grantBtn').disabled = false;
+            if (error) { m.className = 'msg error'; m.textContent = error.message; return; }
+            m.className = 'msg ok'; m.textContent = `${name} can now sign in and add products.`;
+            $('gEmail').value = ''; $('gName').value = '';
+            loadTeam();
+        }
+
+        /* ============================================================
+           EVENTS
+           ============================================================ */
+        $('loginBtn').addEventListener('click', login);
+        ['loginEmail', 'loginPassword'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+        $('logoutBtn').addEventListener('click', logout);
+        $('deniedLogout').addEventListener('click', logout);
+
+        $('tabs').addEventListener('click', e => {
+            const t = e.target.closest('.tab'); if (!t) return;
+            if (t.dataset.tab === 'edit') { if (state.tab === 'edit') return; newProduct(); }
+            else switchTab(t.dataset.tab);
+        });
+
+        ['fSearch', 'fCat', 'fStatus', 'fBy'].forEach(id => $(id).addEventListener('input', renderList));
+        $('listBody').addEventListener('click', async e => {
+            const b = e.target.closest('[data-act]'); if (!b) return;
+            if (b.dataset.act === 'new') { newProduct(); return; }
+            const row = e.target.closest('.prod-row'); if (!row) return;
+            const id = row.dataset.id, p = state.products.find(x => x.id === id);
+            if (b.dataset.act === 'edit') editProduct(id);
+            if (b.dataset.act === 'delete') deleteProduct(id, p ? p.name : 'this product', p && p.image_url);
+        });
+
+        $('fOnRequest').addEventListener('change', () => { syncPriceFields(); markDirty(); });
+        $('fCategory').addEventListener('change', refreshSuggestions);
+        $('fShort').addEventListener('input', updateCounters);
+        $('addSpec').addEventListener('click', () => { addSpecRow(); markDirty(); });
+        document.querySelectorAll('#view-edit input, #view-edit select').forEach(el => { if (el.id !== 'fFile' && el.id !== 'fTagEntry') el.addEventListener('input', markDirty); });
+
+        $('saveBtn').addEventListener('click', saveProduct);
+        $('cancelBtn').addEventListener('click', () => switchTab('list'));
+        $('deleteBtn').addEventListener('click', () => {
+            const p = state.editingRow; if (p) deleteProduct(p.id, p.name, p.image_url);
+        });
+
+        $('aBy').addEventListener('change', () => loadActivity(true));
+        $('aAction').addEventListener('change', () => loadActivity(true));
+        $('aReload').addEventListener('click', () => loadActivity(true));
+        $('aMore').addEventListener('click', () => loadActivity(false));
+
+        $('grantBtn').addEventListener('click', grantUploader);
+        $('tBody').addEventListener('click', async e => {
+            const b = e.target.closest('[data-act]'); if (!b) return;
+            const suspend = b.dataset.act === 'suspend';
+            if (suspend && !(await confirmBox('Suspend ' + b.dataset.name + '?', 'They will immediately lose access to the product admin. Their products stay on the website.', 'Suspend', true))) return;
+            const { error } = await sb.rpc('kadis_set_staff_active', { p_id: b.dataset.id, p_active: !suspend });
+            if (error) { toast(error.message, 'error'); return; }
+            toast(suspend ? 'Suspended' : 'Access restored', 'ok');
+            loadTeam();
+        });
+
+        window.addEventListener('beforeunload', e => { if (state.dirty && state.tab === 'edit') { e.preventDefault(); e.returnValue = ''; } });
+
+        updateCounters();
+        boot();
+    </script>
+</body>
+
+</html>

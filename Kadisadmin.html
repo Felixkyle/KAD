@@ -1,0 +1,1869 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KADIS Admin — Blog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <style>
+        :root {
+            --bg: #0B0C0F;
+            --bg-2: #131519;
+            --bg-3: #1A1D22;
+            --bg-4: #20232A;
+            --ink: #EDEEEC;
+            --ink-dim: #9A9FA8;
+            --ink-dimmer: #5C616A;
+            --line: rgba(255, 255, 255, 0.07);
+            --line-bright: rgba(255, 255, 255, 0.13);
+            --amber: #D9772E;
+            --amber-soft: #E8A15E;
+            --moss: #A9B84C;
+            --danger: #E05252;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Manrope', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Sora', sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        input,
+        textarea,
+        select {
+            font-family: inherit;
+        }
+
+        .wrap {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        header {
+            border-bottom: 1px solid var(--line);
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            background: rgba(11, 12, 15, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 20;
+        }
+
+        header .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Sora';
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .brand .tag {
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: var(--amber-soft);
+            background: rgba(217, 119, 46, 0.1);
+            border: 1px solid rgba(217, 119, 46, 0.25);
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+
+        .user-chip {
+            font-size: 12.5px;
+            color: var(--ink-dim);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .role-pill {
+            font-family: 'Space Mono';
+            font-size: 10px;
+            text-transform: uppercase;
+            padding: 3px 9px;
+            border-radius: 100px;
+            letter-spacing: .04em;
+        }
+
+        .role-pill.admin {
+            background: rgba(217, 119, 46, 0.15);
+            color: var(--amber-soft);
+        }
+
+        .role-pill.blogger {
+            background: rgba(154, 159, 168, 0.15);
+            color: var(--ink-dim);
+        }
+
+        main {
+            padding: 44px 0 80px;
+        }
+
+        /* ---------- Login screen ---------- */
+        #loginView {
+            max-width: 380px;
+            margin: 100px auto 0;
+        }
+
+        #loginView h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        #loginView p {
+            color: var(--ink-dim);
+            font-size: 13.5px;
+            margin-bottom: 28px;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12.5px;
+            color: var(--ink-dim);
+            margin-bottom: 7px;
+            font-weight: 600;
+        }
+
+        .field input,
+        .field textarea,
+        .field select {
+            width: 100%;
+            background: var(--bg-2);
+            border: 1px solid var(--line-bright);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--ink);
+            font-size: 14px;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            border-color: var(--amber);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 90px;
+            line-height: 1.6;
+        }
+
+        .tag-input-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-2);
+            border: 1px solid var(--line-bright);
+            border-radius: 10px;
+            padding: 10px 12px;
+            transition: border-color .2s;
+        }
+
+        .tag-input-wrap:focus-within {
+            border-color: var(--amber);
+        }
+
+        .tag-input-wrap #tagChips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'Space Mono';
+            font-size: 12px;
+            color: var(--amber-soft);
+            background: rgba(217, 119, 46, 0.12);
+            border: 1px solid rgba(217, 119, 46, 0.3);
+            padding: 5px 6px 5px 12px;
+            border-radius: 100px;
+        }
+
+        .tag-chip button {
+            background: none;
+            border: none;
+            color: var(--amber-soft);
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            padding: 2px 4px;
+            opacity: 0.7;
+        }
+
+        .tag-chip button:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+
+        .tag-input-wrap input {
+            flex: 1;
+            min-width: 140px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--ink);
+            font-size: 14px;
+            padding: 6px 2px;
+        }
+
+        .field .hint {
+            font-size: 11.5px;
+            color: var(--ink-dimmer);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .btn {
+            background: var(--amber);
+            color: #0B0C0F;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 12px 22px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all .2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--amber-soft);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--line-bright);
+            color: var(--ink);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--amber);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(224, 82, 82, 0.4);
+            color: var(--danger);
+            font-weight: 700;
+            font-size: 12.5px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .btn-danger:hover {
+            background: rgba(224, 82, 82, 0.1);
+        }
+
+        .msg {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            display: none;
+        }
+
+        .msg.error {
+            background: rgba(224, 82, 82, 0.1);
+            border: 1px solid rgba(224, 82, 82, 0.3);
+            color: #F29B9B;
+            display: block;
+        }
+
+        .msg.ok {
+            background: rgba(169, 184, 76, 0.1);
+            border: 1px solid rgba(169, 184, 76, 0.3);
+            color: var(--moss);
+            display: block;
+        }
+
+        /* ---------- Admin dashboard ---------- */
+        #appView {
+            display: none;
+        }
+
+        .panel {
+            background: var(--bg-2);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+        }
+
+        .panel h3 {
+            font-size: 17px;
+            margin-bottom: 20px;
+        }
+
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .panel-head h3 {
+            margin-bottom: 0;
+        }
+
+        .row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .row3 {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 0.8fr;
+            gap: 14px;
+        }
+
+        @media(max-width:640px) {
+
+            .row2,
+            .row3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .post-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .post-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            background: var(--bg-3);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 16px 18px;
+        }
+
+        .post-row-main {
+            min-width: 0;
+        }
+
+        .post-row-main .cat {
+            font-family: 'Space Mono';
+            font-size: 10.5px;
+            color: var(--amber-soft);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        .post-row-main .author {
+            font-family: 'Space Mono';
+            font-size: 10.5px;
+            color: var(--ink-dimmer);
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .post-row-main h4 {
+            font-size: 14.5px;
+            margin: 4px 0 2px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .post-row-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .status-pill {
+            font-family: 'Space Mono';
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 100px;
+            text-transform: uppercase;
+        }
+
+        .status-pill.pub {
+            background: rgba(169, 184, 76, 0.15);
+            color: var(--moss);
+        }
+
+        .status-pill.draft {
+            background: rgba(154, 159, 168, 0.15);
+            color: var(--ink-dim);
+        }
+
+        .tag-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .tag-pill {
+            font-family: 'Space Mono';
+            font-size: 10px;
+            color: var(--ink-dim);
+            background: var(--bg-4);
+            border: 1px solid var(--line-bright);
+            padding: 2px 9px;
+            border-radius: 100px;
+        }
+
+        .empty-note {
+            color: var(--ink-dimmer);
+            font-size: 13.5px;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        /* ---------- Bloggers panel (admin only) ---------- */
+        .blogger-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .blogger-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-3);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .blogger-row:hover {
+            border-color: var(--line-bright);
+        }
+
+        .blogger-row.active {
+            border-color: var(--amber);
+        }
+
+        .blogger-row .who {
+            min-width: 0;
+        }
+
+        .blogger-row .who .name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .blogger-row .who .email {
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: var(--ink-dimmer);
+        }
+
+        .blogger-row .count {
+            font-family: 'Space Mono';
+            font-size: 13px;
+            color: var(--amber-soft);
+            background: rgba(217, 119, 46, 0.1);
+            border: 1px solid rgba(217, 119, 46, 0.25);
+            padding: 4px 12px;
+            border-radius: 100px;
+            flex-shrink: 0;
+        }
+
+        /* =====================================================
+           THE "PAGE" — this is a live, editable mirror of a post
+           exactly as it will look on blog.html. Cover image,
+           body text, FAQs and CTA are all edited right inside it.
+        ===================================================== */
+        .page-field label {
+            display: block;
+            font-size: 12.5px;
+            color: var(--ink-dim);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .page {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #0C0B09;
+            color: #EFEAE0;
+            border: 1px solid var(--line-bright);
+            border-radius: 10px;
+            padding: 24px 20px 30px;
+            font-family: 'Source Serif 4', serif;
+            font-size: 17px;
+            line-height: 1.82;
+        }
+
+        .cover-box {
+            position: relative;
+            aspect-ratio: 16/9;
+            border: 1px solid rgba(239, 234, 224, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 34px;
+            background: repeating-linear-gradient(45deg, #131210, #131210 10px, #1B1916 10px, #1B1916 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cover-box img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .cover-box .cover-label {
+            font-family: 'Space Mono';
+            font-size: 11px;
+            color: #6B6255;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .cover-box .cover-upload {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            background: rgba(12, 11, 9, 0.85);
+            border: 1px solid var(--line-bright);
+            color: #EFEAE0;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-family: 'Manrope';
+            font-weight: 600;
+            font-size: 12.5px;
+            cursor: pointer;
+        }
+
+        .cover-box .cover-upload:hover {
+            border-color: var(--amber);
+        }
+
+        .cover-box .cover-remove {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(12, 11, 9, 0.85);
+            border: 1px solid var(--line-bright);
+            color: #F29B9B;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-family: 'Space Mono';
+            font-size: 11px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .cover-box.has-img .cover-remove {
+            display: block;
+        }
+
+        .cover-box input[type="file"] {
+            display: none;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            padding: 10px;
+            background: var(--bg-3);
+            border: 1px solid var(--line-bright);
+            border-radius: 10px;
+            margin-bottom: 16px;
+            position: sticky;
+            top: 74px;
+            z-index: 6;
+        }
+
+        .editor-toolbar button,
+        .editor-toolbar select {
+            background: var(--bg-2);
+            border: 1px solid var(--line-bright);
+            color: var(--ink);
+            border-radius: 8px;
+            padding: 7px 11px;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .editor-toolbar button:hover,
+        .editor-toolbar select:hover {
+            border-color: var(--amber);
+        }
+
+        .editor-toolbar .sep {
+            width: 1px;
+            height: 22px;
+            background: var(--line-bright);
+            margin: 0 4px;
+        }
+
+        .swatch {
+            width: 22px;
+            height: 22px;
+            border-radius: 50% !important;
+            padding: 0 !important;
+            border: 2px solid var(--line-bright) !important;
+        }
+
+        #editor {
+            min-height: 320px;
+            outline: none;
+        }
+
+        #editor:empty::before {
+            content: attr(data-placeholder);
+            color: #6B6255;
+        }
+
+        .page p {
+            margin: 0 0 24px;
+        }
+
+        .page h3 {
+            font-family: 'Fraunces', serif;
+            font-weight: 500;
+            font-size: 27px;
+            line-height: 1.25;
+            margin: 42px 0 16px;
+        }
+
+        .page h4 {
+            font-family: 'Fraunces', serif;
+            font-weight: 500;
+            font-size: 21px;
+            line-height: 1.25;
+            margin: 36px 0 14px;
+        }
+
+        .page blockquote {
+            margin: 38px 0;
+            padding: 4px 0 4px 26px;
+            border-left: 2px solid var(--amber);
+            font-family: 'Fraunces', serif;
+            font-style: italic;
+            font-weight: 400;
+            font-size: 22px;
+            line-height: 1.45;
+        }
+
+        .page ul,
+        .page ol {
+            margin: 0 0 24px 24px;
+        }
+
+        .page li {
+            margin-bottom: 8px;
+        }
+
+        .page a {
+            color: var(--amber-soft);
+            text-decoration: underline;
+        }
+
+        .page-cta {
+            margin-top: 36px;
+            padding-top: 28px;
+            border-top: 1px solid rgba(239, 234, 224, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-cta .cta-text-edit {
+            font-family: 'Source Serif 4';
+            font-size: 14px;
+            line-height: 1.7;
+            color: rgb(209, 203, 203);
+            flex: 1 1 320px;
+            min-width: 0;
+            outline: none;
+            border-bottom: 1px dashed transparent;
+        }
+
+        .page-cta .cta-text-edit:focus {
+            border-bottom-color: var(--amber);
+        }
+
+        .cta-label-edit {
+            font-family: 'Manrope';
+            font-size: 13px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--line-bright);
+            padding-bottom: 3px;
+            outline: none;
+            white-space: nowrap;
+        }
+
+        .cta-label-edit:focus {
+            border-bottom-color: var(--amber);
+        }
+
+        .cta-link-row {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Space Mono';
+            font-size: 11.5px;
+            color: #6B6255;
+        }
+
+        .cta-link-row input {
+            flex: 1;
+            background: #131210;
+            border: 1px solid var(--line-bright);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #EFEAE0;
+            font-family: 'Space Mono';
+            font-size: 12px;
+        }
+
+        [data-ph]:empty::before {
+            content: attr(data-ph);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="wrap">
+            <div class="brand">KADIS <span class="tag">ADMIN · BLOG</span></div>
+            <div class="user-chip" id="userChip" style="display:none;">
+                <span id="roleChip"></span>
+                <span id="userEmail"></span>
+                <button class="btn-ghost" onclick="logout()">Log out</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+
+        <!-- LOGIN -->
+        <div id="loginView">
+            <h2>Sign in</h2>
+            <p>Log in with your Kadis admin account to post to the blog.</p>
+            <div class="msg" id="loginMsg"></div>
+            <div class="field">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@kadis.com.ng" autocomplete="username">
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+            </div>
+            <button class="btn" id="loginBtn" onclick="login()">Sign in →</button>
+        </div>
+
+        <!-- ADMIN DASHBOARD -->
+        <div id="appView">
+
+            <div class="msg" id="formMsg"></div>
+
+            <!-- BLOGGERS PANEL — admins only -->
+            <div class="panel" id="bloggersPanel" style="display:none;">
+                <div class="panel-head">
+                    <h3>Bloggers</h3>
+                    <button class="btn-ghost" id="clearFilterBtn" onclick="clearBloggerFilter()"
+                        style="display:none;">Show all posts</button>
+                </div>
+                <div class="blogger-list" id="bloggerList">
+                    <div class="empty-note">Loading…</div>
+                </div>
+            </div>
+
+            <div class="panel" id="postFormPanel">
+                <h3 id="formTitle">Write a new post</h3>
+
+                <input type="hidden" id="editId">
+
+                <div class="row2">
+                    <div class="field">
+                        <label>Title</label>
+                        <input type="text" id="fTitle"
+                            placeholder="e.g. Smart Switches for Hotels and Commercial Buildings">
+                    </div>
+                    <div class="field">
+                        <label>Status</label>
+                        <select id="fPublished">
+                            <option value="true">Published</option>
+                            <option value="false">Draft</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Categories</label>
+                    <div class="tag-input-wrap" id="catInputWrap" style="position:relative;">
+                        <div id="catChips"></div>
+                        <input type="text" id="fCatEntry" placeholder="Type a category and press Enter…" autocomplete="off">
+                        <div id="catSuggestions" style="position:absolute; top:calc(100% + 6px); left:0; right:0;
+                            background:var(--bg-3); border:1px solid var(--line-bright); border-radius:10px;
+                            max-height:180px; overflow-y:auto; display:none; z-index:10;"></div>
+                    </div>
+                    <div class="hint">
+                        Press Enter or comma to add a category — a post can have more than one. Pick a suggestion as
+                        you type, or type a brand-new name to add it to the shared list for everyone. Click a
+                        category's × to remove it from this post.
+                        <span id="manageCatLink" onclick="toggleManageCategories()"
+                            style="display:none; cursor:pointer; color:var(--amber-soft); text-decoration:underline; margin-left:4px;">Manage category list</span>
+                    </div>
+                    <div id="manageCatPanel" style="display:none; margin-top:12px; background:var(--bg-3);
+                        border:1px solid var(--line); border-radius:10px; padding:12px;">
+                        <div id="manageCatList" style="display:flex; flex-direction:column; gap:6px;"></div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Summary (optional — shown in the index list. Leave empty to auto-fill from the post.)</label>
+                    <textarea id="fDek" style="min-height:60px;"
+                        placeholder="A short one or two sentence summary. Leave blank to generate one automatically."></textarea>
+                </div>
+
+                <div class="field">
+                    <label>Tags</label>
+                    <div class="tag-input-wrap" id="tagInputWrap">
+                        <div id="tagChips"></div>
+                        <input type="text" id="fTagEntry" placeholder="Type a tag and press Enter…">
+                    </div>
+                    <div class="hint">Press Enter or comma to add a tag. Click a tag's × to remove it. Tags aren't shown to readers — they're for your own organizing.</div>
+                </div>
+
+                <div class="page-field">
+                    <label>The post — write and format it exactly as it will appear on the blog</label>
+
+                    <div class="page" id="page">
+
+                        <!-- Cover image -->
+                        <div class="cover-box" id="coverBox">
+                            <img id="coverImg" alt="">
+                            <span class="cover-label" id="coverLabel">Cover image</span>
+                            <button type="button" class="cover-remove" id="coverRemoveBtn" onclick="clearImage()">Remove ✕</button>
+                            <label class="cover-upload">
+                                Upload image
+                                <input type="file" id="fImageFile" accept="image/*" onchange="handleImageSelect(event)">
+                            </label>
+                        </div>
+                        <input type="hidden" id="fImgUrl">
+
+                        <!-- Formatting toolbar -->
+                        <div class="editor-toolbar" id="editorToolbar">
+                            <select id="blockSelect" onchange="setBlock(this.value)">
+                                <option value="p">Paragraph</option>
+                                <option value="h3">Heading</option>
+                                <option value="h4">Subheading</option>
+                                <option value="blockquote">Quote</option>
+                            </select>
+                            <span class="sep"></span>
+                            <button type="button" onclick="fmt('bold')"><b>B</b></button>
+                            <button type="button" onclick="fmt('italic')"><i>I</i></button>
+                            <button type="button" onclick="fmt('underline')"><u>U</u></button>
+                            <button type="button" onclick="fmt('strikeThrough')"><s>S</s></button>
+                            <span class="sep"></span>
+                            <button type="button" class="swatch" style="background:#E8A15E" onclick="fmt('foreColor','#E8A15E')" title="Amber"></button>
+                            <button type="button" class="swatch" style="background:#FFFFFF" onclick="fmt('foreColor','#FFFFFF')" title="White"></button>
+                            <button type="button" class="swatch" style="background:#A9B84C" onclick="fmt('foreColor','#A9B84C')" title="Green"></button>
+                            <button type="button" class="swatch" style="background:#E05252" onclick="fmt('foreColor','#E05252')" title="Red"></button>
+                            <button type="button" class="swatch" style="background:#5DA9E9" onclick="fmt('foreColor','#5DA9E9')" title="Blue"></button>
+                            <input type="color" id="customColor" value="#E8A15E" onchange="fmt('foreColor',this.value)" title="Custom text color" style="width:32px;height:32px;border:none;background:none;cursor:pointer;padding:0;">
+                            <button type="button" onclick="fmt('hiliteColor','#5a3a12')" title="Highlight">Highlight</button>
+                            <button type="button" onclick="fmt('foreColor','#EFEAE0')" title="Reset color">A✕</button>
+                            <span class="sep"></span>
+                            <button type="button" onclick="fmt('insertUnorderedList')">• List</button>
+                            <button type="button" onclick="fmt('insertOrderedList')">1. List</button>
+                            <button type="button" onclick="fmt('justifyLeft')">⯇</button>
+                            <button type="button" onclick="fmt('justifyCenter')">≡</button>
+                            <span class="sep"></span>
+                            <button type="button" onclick="insertFaq()" title="Drops a question + answer line at your cursor">+ FAQ</button>
+                            <span class="sep"></span>
+                            <button type="button" onclick="addLink()">🔗 Link</button>
+                            <button type="button" onclick="fmt('removeFormat')">Clear</button>
+                            <button type="button" onclick="fmt('undo')">↶</button>
+                            <button type="button" onclick="fmt('redo')">↷</button>
+                        </div>
+
+                        <!-- The post body — FAQs live right in here too, not in a separate box.
+                             Use the Subheading option for a "Frequently Asked Questions" title,
+                             then click "+ FAQ" for each question — it drops a bold question line
+                             and an answer line straight into the writing area at your cursor. -->
+                        <div id="editor" contenteditable="true" data-placeholder="Start writing your post here… add a Frequently Asked Questions subheading and use the + FAQ button when you're ready for FAQs."></div>
+
+                        <!-- Call to action — live inside the page -->
+                        <div class="page-cta">
+                            <div class="cta-text-edit" id="ctaText" contenteditable="true"
+                                data-ph="Kadis handles X as part of FixIT — write the call-to-action text here."></div>
+                            <div class="cta-label-edit" id="ctaLabel" contenteditable="true"
+                                data-ph="Button label →"></div>
+                        </div>
+                        <div class="cta-link-row">
+                            Button link:
+                            <input type="text" id="fCtaHref" placeholder="installation.html?s=fixit">
+                        </div>
+
+                    </div>
+                    <div class="hint">The link can be a page on this site (e.g. installation.html?s=fixit) or a full link starting with https:// — e.g. https://facebook.com/kadisdigitals, not just facebook.com.</div>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-top:24px;">
+                    <button class="btn" id="saveBtn" onclick="savePost()">Publish post →</button>
+                    <button class="btn-ghost" id="cancelEditBtn" onclick="resetForm()" style="display:none;">Cancel
+                        edit</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3 id="postListTitle">Your posts</h3>
+                </div>
+                <div class="post-list" id="postList">
+                    <div class="empty-note">Loading…</div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // ============================================================
+        // 1. CONFIG
+        // ============================================================
+        const SUPABASE_URL = "https://xjaieymgmhberbkbucrh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_r86lqj5QiI3qTgXicj7Ryg_AWkXZXu6";
+
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentTags = [];
+
+        // currentUser.role is set from the `profiles` table after login.
+        // 'admin' -> sees every post + the bloggers panel. 'blogger' -> sees only their own posts.
+        let currentUser = { id: null, email: null, role: 'blogger', displayName: '' };
+
+        // When an admin clicks a blogger in the bloggers panel, this filters the post list.
+        let bloggerFilterId = null;
+
+        // Posts currently shown in the list, keyed by id. The Edit button
+        // passes only the id through its onclick (safe — just a UUID) and
+        // looks the full post up from here, instead of embedding the whole
+        // post's data (including its HTML body) into an HTML attribute,
+        // which breaks the moment the content contains an "&", "<", ">" or
+        // similar character — the browser quietly corrupts it while parsing
+        // the page, which is what was making Edit silently fail.
+        let loadedPosts = {};
+
+        const SAFE_HTML = {
+            ALLOWED_TAGS: ['p', 'br', 'h3', 'h4', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'font', 'div'],
+            ALLOWED_ATTR: ['href', 'style', 'color', 'target', 'rel']
+        };
+
+        // ---------- Auth ----------
+        async function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+            const msg = document.getElementById('loginMsg');
+            msg.className = 'msg'; msg.textContent = '';
+            btn.disabled = true; btn.textContent = 'Signing in…';
+
+            const { error } = await sb.auth.signInWithPassword({ email, password });
+
+            btn.disabled = false; btn.textContent = 'Sign in →';
+
+            if (error) {
+                msg.className = 'msg error';
+                msg.textContent = error.message;
+                return;
+            }
+            await showApp();
+        }
+
+        async function logout() {
+            await sb.auth.signOut();
+            location.reload();
+        }
+
+        async function checkSession() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) await showApp();
+        }
+
+        async function loadCurrentUserProfile() {
+            const { data: { user } } = await sb.auth.getUser();
+            currentUser.id = user.id;
+            currentUser.email = user.email;
+
+            const { data: profile, error } = await sb
+                .from('profiles')
+                .select('role, display_name')
+                .eq('id', user.id)
+                .single();
+
+            if (error || !profile) {
+                currentUser.role = 'blogger';
+                currentUser.displayName = user.email;
+                return;
+            }
+            currentUser.role = profile.role || 'blogger';
+            currentUser.displayName = profile.display_name || user.email;
+        }
+
+        async function showApp() {
+            await loadCurrentUserProfile();
+
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('appView').style.display = 'block';
+            document.getElementById('userChip').style.display = 'flex';
+            document.getElementById('userEmail').textContent = currentUser.email;
+
+            const roleChip = document.getElementById('roleChip');
+            roleChip.textContent = currentUser.role === 'admin' ? 'Admin' : 'Blogger';
+            roleChip.className = 'role-pill ' + (currentUser.role === 'admin' ? 'admin' : 'blogger');
+
+            const isAdmin = currentUser.role === 'admin';
+            document.getElementById('bloggersPanel').style.display = isAdmin ? 'block' : 'none';
+
+            document.getElementById('postListTitle').textContent = isAdmin ? 'All posts' : 'Your posts';
+
+            await loadCategoryNames();
+            resetForm();
+            if (isAdmin) loadBloggers();
+            loadPosts();
+        }
+
+        // ---------- Categories (multi-select, chip style) ----------
+        // currentCats holds the categories chosen for THIS post.
+        // allCategoryNames is the full shared list (from the database),
+        // used to power the autocomplete suggestions and to tell a genuinely
+        // new category apart from one that already exists.
+        let currentCats = [];
+        let allCategoryNames = [];
+
+        async function loadCategoryNames() {
+            const { data, error } = await sb.from('categories').select('name').order('name', { ascending: true });
+            if (error) { console.warn('Could not load categories:', error.message); return; }
+            allCategoryNames = (data || []).map(r => r.name);
+            document.getElementById('manageCatLink').style.display = (currentUser.role === 'admin') ? 'inline' : 'none';
+        }
+
+        function renderCatChips() {
+            const container = document.getElementById('catChips');
+            container.innerHTML = '';
+            currentCats.forEach((name, idx) => {
+                const chip = document.createElement('span');
+                chip.className = 'tag-chip';
+                chip.innerHTML = `${name} <button type="button" aria-label="Remove category">✕</button>`;
+                chip.querySelector('button').addEventListener('click', () => {
+                    currentCats.splice(idx, 1);
+                    renderCatChips();
+                });
+                container.appendChild(chip);
+            });
+        }
+
+        // Adds one category to this post's chip list, and — if it's a name
+        // nobody has used before — saves it to the shared categories table
+        // immediately, so it's available to every blogger from this point on.
+        async function addCategory(name) {
+            name = name.trim();
+            if (!name || currentCats.includes(name)) return;
+            currentCats.push(name);
+            renderCatChips();
+
+            if (!allCategoryNames.includes(name)) {
+                const { error } = await sb.from('categories').insert({ name });
+                if (!error || error.message.toLowerCase().includes('duplicate')) {
+                    await loadCategoryNames();
+                }
+            }
+        }
+
+        // Commits whatever's currently typed in the entry box — handles a
+        // single typed name, Enter/comma-separated input, and a pasted list.
+        async function commitCatEntry() {
+            const input = document.getElementById('fCatEntry');
+            const parts = input.value.split(',').map(s => s.trim()).filter(Boolean);
+            input.value = '';
+            hideCatSuggestions();
+            for (const p of parts) await addCategory(p);
+        }
+
+        function showCatSuggestions(filterText) {
+            const box = document.getElementById('catSuggestions');
+            const q = filterText.trim().toLowerCase();
+            const matches = allCategoryNames
+                .filter(n => !currentCats.includes(n))
+                .filter(n => !q || n.toLowerCase().includes(q))
+                .slice(0, 8);
+
+            if (!matches.length) { hideCatSuggestions(); return; }
+
+            box.innerHTML = '';
+            matches.forEach(name => {
+                const row = document.createElement('div');
+                row.textContent = name;
+                row.style.cssText = 'padding:9px 14px; font-size:13.5px; cursor:pointer;';
+                row.addEventListener('mouseenter', () => row.style.background = 'var(--bg-4)');
+                row.addEventListener('mouseleave', () => row.style.background = 'transparent');
+                // mousedown (not click) so this fires before the input's blur handler hides the box
+                row.addEventListener('mousedown', async (e) => {
+                    e.preventDefault();
+                    document.getElementById('fCatEntry').value = '';
+                    hideCatSuggestions();
+                    await addCategory(name);
+                });
+                box.appendChild(row);
+            });
+            box.style.display = 'block';
+        }
+        function hideCatSuggestions() {
+            document.getElementById('catSuggestions').style.display = 'none';
+        }
+
+        document.getElementById('fCatEntry').addEventListener('input', (e) => showCatSuggestions(e.target.value));
+        document.getElementById('fCatEntry').addEventListener('focus', (e) => showCatSuggestions(e.target.value));
+        document.getElementById('fCatEntry').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                commitCatEntry();
+            } else if (e.key === 'Backspace' && !e.target.value && currentCats.length) {
+                currentCats.pop();
+                renderCatChips();
+            } else if (e.key === 'Escape') {
+                hideCatSuggestions();
+            }
+        });
+        // Slight delay so a click on a suggestion registers before the box disappears
+        document.getElementById('fCatEntry').addEventListener('blur', () => {
+            setTimeout(() => { commitCatEntry(); }, 120);
+        });
+
+        // ---------- Manage category list (admin only) ----------
+        // A small panel, toggled by the "Manage category list" link, that
+        // lists every category and lets an admin delete one from the shared
+        // list entirely. Doesn't touch any post already using that name.
+        function toggleManageCategories() {
+            const panel = document.getElementById('manageCatPanel');
+            const isOpen = panel.style.display === 'block';
+            panel.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) renderManageCategoriesList();
+        }
+
+        function renderManageCategoriesList() {
+            const list = document.getElementById('manageCatList');
+            list.innerHTML = '';
+            if (!allCategoryNames.length) {
+                list.innerHTML = '<div class="empty-note" style="padding:8px 0;">No categories yet.</div>';
+                return;
+            }
+            allCategoryNames.forEach(name => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:6px 4px;';
+                row.innerHTML = `<span style="font-size:13.5px;">${name}</span>`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn-danger';
+                btn.textContent = 'Remove';
+                btn.onclick = () => deleteCategoryGlobally(name);
+                row.appendChild(btn);
+                list.appendChild(row);
+            });
+        }
+
+        async function deleteCategoryGlobally(name) {
+            if (!confirm(`Remove "${name}" from the category list?\n\nThis won't change any posts already using it — it just won't be offered as a choice going forward.`)) return;
+
+            const { error } = await sb.from('categories').delete().eq('name', name);
+            const msg = document.getElementById('formMsg');
+            if (error) {
+                msg.className = 'msg error';
+                msg.textContent = "Couldn't remove that category: " + error.message;
+                return;
+            }
+            await loadCategoryNames();
+            currentCats = currentCats.filter(c => c !== name); // drop it from this post too if it was selected
+            renderCatChips();
+            renderManageCategoriesList();
+            msg.className = 'msg ok';
+            msg.textContent = `"${name}" removed from the category list.`;
+        }
+
+
+        // ---------- Slug helper (used only internally now — no field shown) ----------
+        function slugify(str) {
+            return str.toLowerCase().trim()
+                .replace(/&/g, 'and')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+        }
+
+        // ---------- Cover image ----------
+        async function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const msg = document.getElementById('formMsg');
+            msg.className = 'msg'; msg.textContent = 'Uploading image…';
+            msg.style.display = 'block';
+
+            const ext = file.name.split('.').pop();
+            const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+            const { error: uploadError } = await sb.storage.from('post-images').upload(path, file);
+
+            if (uploadError) {
+                msg.className = 'msg error';
+                msg.textContent = 'Image upload failed: ' + uploadError.message;
+                return;
+            }
+
+            const { data } = sb.storage.from('post-images').getPublicUrl(path);
+            setCoverPreview(data.publicUrl);
+
+            msg.className = 'msg'; msg.textContent = ''; msg.style.display = 'none';
+        }
+
+        function setCoverPreview(url) {
+            document.getElementById('fImgUrl').value = url || '';
+            const box = document.getElementById('coverBox');
+            const img = document.getElementById('coverImg');
+            const label = document.getElementById('coverLabel');
+            if (url) {
+                img.src = url;
+                img.style.display = 'block';
+                label.style.display = 'none';
+                box.classList.add('has-img');
+            } else {
+                img.src = '';
+                img.style.display = 'none';
+                label.style.display = 'block';
+                box.classList.remove('has-img');
+            }
+        }
+
+        function clearImage() {
+            document.getElementById('fImageFile').value = '';
+            setCoverPreview('');
+        }
+
+        // ---------- Tag chip input ----------
+        function renderTagChips() {
+            const container = document.getElementById('tagChips');
+            container.innerHTML = '';
+            currentTags.forEach((tag, idx) => {
+                const chip = document.createElement('span');
+                chip.className = 'tag-chip';
+                chip.innerHTML = `${tag} <button type="button" aria-label="Remove tag">✕</button>`;
+                chip.querySelector('button').addEventListener('click', () => {
+                    currentTags.splice(idx, 1);
+                    renderTagChips();
+                });
+                container.appendChild(chip);
+            });
+        }
+
+        function addTagFromEntry() {
+            const input = document.getElementById('fTagEntry');
+            input.value
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0)
+                .forEach(t => {
+                    if (!currentTags.includes(t)) currentTags.push(t);
+                });
+            renderTagChips();
+            input.value = '';
+        }
+
+        document.getElementById('fTagEntry').addEventListener('paste', (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            text.split(',').map(t => t.trim()).filter(Boolean).forEach(t => {
+                if (!currentTags.includes(t)) currentTags.push(t);
+            });
+            renderTagChips();
+        });
+
+        document.getElementById('fTagEntry').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                addTagFromEntry();
+            } else if (e.key === 'Backspace' && !e.target.value && currentTags.length) {
+                currentTags.pop();
+                renderTagChips();
+            }
+        });
+        document.getElementById('fTagEntry').addEventListener('blur', addTagFromEntry);
+
+        // ---------- CTA link safety net ----------
+        function normalizeCtaHref(raw) {
+            const href = raw.trim();
+            if (!href) return href;
+            if (/^https?:\/\//i.test(href)) return href;
+            if (href.startsWith('#') || href.startsWith('/')) return href;
+            if (/^mailto:|^tel:/i.test(href)) return href;
+
+            const firstSegment = href.split('/')[0];
+            const looksLikeLocalPage = /\.(html?|php)(\?[^/]*)?$/i.test(firstSegment) || !firstSegment.includes('.');
+
+            if (!looksLikeLocalPage) {
+                return 'https://' + href.replace(/^www\./i, '');
+            }
+            return href;
+        }
+
+        // ---------- Rich text editor ----------
+        const editor = document.getElementById('editor');
+        document.execCommand('defaultParagraphSeparator', false, 'p');
+
+        document.getElementById('editorToolbar').addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') e.preventDefault();
+        });
+
+        // ---------- Rich-text paste ----------
+        // Pasted HTML (Word, Google Docs, web pages, other editors) is rebuilt from
+        // scratch using only the tags this editor supports, so bold, headings, lists,
+        // links and paragraphs survive, while fonts, colours, backgrounds, images and
+        // other junk that would clash with the site's design are dropped.
+        const PASTE_SKIP = new Set(['script', 'style', 'meta', 'link', 'head', 'title', 'img', 'svg', 'picture',
+            'iframe', 'object', 'embed', 'video', 'audio', 'canvas', 'button', 'input', 'select', 'textarea',
+            'form', 'noscript', 'template']);
+        const PASTE_BLOCKS = new Set(['p', 'div', 'section', 'article', 'header', 'footer', 'main', 'aside', 'nav',
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'pre', 'table', 'thead', 'tbody',
+            'tfoot', 'tr', 'td', 'th', 'hr', 'figure', 'figcaption', 'dl', 'dt', 'dd']);
+        const PASTE_CONTAINERS = new Set(['body', 'ul', 'ol', 'table', 'thead', 'tbody', 'tfoot', 'tr']);
+        const PASTE_HEADING = { h1: 'h3', h2: 'h3', h3: 'h4', h4: 'h4', h5: 'h4', h6: 'h4' };
+
+        function pasteEscape(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function pasteHasBlock(el) {
+            return !!el.querySelector('p,div,h1,h2,h3,h4,h5,h6,ul,ol,blockquote,pre,table,li,hr');
+        }
+        function pasteIsBold(el, tag) {
+            const fw = (el.style && el.style.fontWeight || '').toLowerCase();
+            if (fw) return fw === 'bold' || fw === 'bolder' || parseInt(fw, 10) >= 600;
+            return tag === 'b' || tag === 'strong';
+        }
+
+        function pasteNode(node, ctx) {
+            if (node.nodeType === 3) {
+                const raw = node.nodeValue.replace(/[\s\u00a0]+/g, ' ');
+                if (!raw.trim()) {
+                    const p = node.parentNode, prev = node.previousSibling, next = node.nextSibling;
+                    const blk = (n) => n && n.nodeType === 1 && PASTE_BLOCKS.has(n.tagName.toLowerCase());
+                    if (!p || PASTE_CONTAINERS.has(p.tagName.toLowerCase()) || blk(prev) || blk(next) || (!prev && !next)) return '';
+                    return ' ';
+                }
+                return pasteEscape(raw);
+            }
+            if (node.nodeType !== 1) return '';
+
+            const tag = node.tagName.toLowerCase();
+            if (PASTE_SKIP.has(tag)) return '';
+            if (node.hidden || /display\s*:\s*none/i.test(node.getAttribute('style') || '')) return '';
+
+            const kids = (c) => Array.from(node.childNodes).map(n => pasteNode(n, c || ctx)).join('');
+            const trimBlock = (s) => s.replace(/^(\s|<br>)+|(\s|<br>)+$/g, '');
+
+            if (tag === 'br') return '<br>';
+            if (tag === 'hr') return '';
+
+            // Headings
+            if (PASTE_HEADING[tag]) {
+                const inner = trimBlock(kids(Object.assign({}, ctx, { noBold: true })));
+                return inner.replace(/<[^>]+>/g, '').trim() ? `<${PASTE_HEADING[tag]}>${inner}</${PASTE_HEADING[tag]}>` : '';
+            }
+
+            // Lists
+            if (tag === 'ul' || tag === 'ol') {
+                const inner = kids(Object.assign({}, ctx, { inList: true }));
+                return inner ? `<${tag}>${inner}</${tag}>` : '';
+            }
+            if (tag === 'li') {
+                const inner = trimBlock(kids(Object.assign({}, ctx, { inLi: true })));
+                return inner.replace(/<[^>]+>/g, '').trim() ? `<li>${inner}</li>` : '';
+            }
+
+            // Quote
+            if (tag === 'blockquote') {
+                const inner = trimBlock(kids(Object.assign({}, ctx, { inLi: true })));
+                return inner.replace(/<[^>]+>/g, '').trim() ? `<blockquote>${inner}</blockquote>` : '';
+            }
+
+            // Paragraph-like blocks
+            if (tag === 'p' || tag === 'pre' || tag === 'figcaption' || tag === 'dt' || tag === 'dd') {
+                const inner = trimBlock(kids());
+                if (ctx.inLi) return inner ? inner + '<br>' : '';
+                return inner.replace(/<[^>]+>/g, '').trim() ? `<p>${inner}</p>` : '';
+            }
+
+            // Table -> one paragraph per row
+            if (tag === 'tr') {
+                const cells = Array.from(node.children).map(c => trimBlock(Array.from(c.childNodes).map(n => pasteNode(n, ctx)).join('')))
+                    .filter(Boolean).join(' &nbsp;|&nbsp; ');
+                return cells ? `<p>${cells}</p>` : '';
+            }
+
+            // Generic containers: only wrap in <p> if they hold inline content directly
+            if (tag === 'div' || tag === 'section' || tag === 'article' || tag === 'header' || tag === 'footer' ||
+                tag === 'main' || tag === 'aside' || tag === 'nav' || tag === 'figure' || tag === 'dl' ||
+                tag === 'table' || tag === 'thead' || tag === 'tbody' || tag === 'tfoot' || tag === 'td' || tag === 'th' || tag === 'body') {
+                if (pasteHasBlock(node) || ctx.inList) return kids();
+                const inner = trimBlock(kids());
+                if (tag === 'body') return inner; // inline-only paste stays inline (no forced new paragraph)
+                if (!inner.replace(/<[^>]+>/g, '').trim()) return '';
+                return ctx.inLi ? inner + '<br>' : `<p>${inner}</p>`;
+            }
+
+            // Links
+            if (tag === 'a') {
+                const inner = kids(Object.assign({}, ctx, { inLink: true }));
+                const href = (node.getAttribute('href') || '').trim();
+                if (!inner.trim()) return '';
+                if (/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(href)) {
+                    return `<a href="${href.replace(/"/g, '&quot;')}">${inner}</a>`;
+                }
+                return inner;
+            }
+
+            // Inline formatting (tags and the inline styles Word / Google Docs use)
+            let out = kids();
+            if (!out) return '';
+            const st = node.style || {};
+            const deco = (st.textDecoration || st.textDecorationLine || '').toLowerCase();
+            if (pasteIsBold(node, tag) && !ctx.noBold) out = `<strong>${out}</strong>`;
+            if (tag === 'i' || tag === 'em' || tag === 'cite' || (st.fontStyle || '').toLowerCase() === 'italic') out = `<em>${out}</em>`;
+            if ((tag === 'u' || deco.includes('underline')) && !ctx.inLink) out = `<u>${out}</u>`;
+            if (tag === 's' || tag === 'strike' || tag === 'del' || deco.includes('line-through')) out = `<s>${out}</s>`;
+            return out;
+        }
+
+        function cleanPastedHtml(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            let out = pasteNode(doc.body, {});
+            // Merge the <br><br> runs some sources use as paragraph breaks are left as-is;
+            // just drop empty blocks and tidy whitespace.
+            out = out.replace(/<(p|li|h3|h4|blockquote)>(\s|<br>)*<\/\1>/g, '')
+                     .replace(/<\/(strong|em|u|s)><\1>/g, '');
+            return DOMPurify.sanitize(out, SAFE_HTML).trim();
+        }
+
+        // Copy/paste inside the editor keeps everything (colours etc.). We remember
+        // what was copied from here so it isn't stripped on the way back in.
+        let internalCopyText = null;
+        ['copy', 'cut'].forEach(evt => document.addEventListener(evt, () => {
+            const sel = window.getSelection();
+            internalCopyText = (sel && sel.anchorNode && editor.contains(sel.anchorNode)) ? sel.toString() : null;
+        }));
+
+        editor.addEventListener('paste', (e) => {
+            const cd = e.clipboardData || window.clipboardData;
+            if (!cd) return;
+            const html = cd.getData('text/html');
+            const text = cd.getData('text/plain');
+
+            if (internalCopyText !== null && text === internalCopyText && html) return; // native paste
+
+            e.preventDefault();
+            if (html && html.trim()) {
+                const cleaned = cleanPastedHtml(html);
+                if (cleaned) {
+                    document.execCommand('insertHTML', false, cleaned);
+                    return;
+                }
+            }
+            document.execCommand('insertText', false, text);
+        });
+
+        function fmt(cmd, val = null) {
+            editor.focus();
+            document.execCommand('styleWithCSS', false, true);
+            document.execCommand(cmd, false, val);
+        }
+        function setBlock(tag) {
+            editor.focus();
+            document.execCommand('formatBlock', false, tag);
+        }
+        function addLink() {
+            let url = prompt('Link address (e.g. https://facebook.com/kadisdigitals):');
+            if (!url) return;
+            if (!/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(url)) url = 'https://' + url;
+            fmt('createLink', url);
+        }
+
+        function blocksToHtml(body) {
+            return (body || []).map(b => {
+                if (b.html) return b.html;
+                if (b.p) return `<p>${b.p}</p>`;
+                if (b.h4) return `<h4>${b.h4}</h4>`;
+                if (b.quote) return `<blockquote>${b.quote}</blockquote>`;
+                return '';
+            }).join('');
+        }
+
+        // ---------- FAQ helper — inserts a Q&A pair right into the post's own
+        // writing area, at wherever the cursor is, instead of a separate box.
+        // The blogger types the real question/answer over the placeholder text. ----------
+        function insertFaq() {
+            editor.focus();
+            document.execCommand('insertHTML', false,
+                '<p><strong>Question — edit this?</strong></p><p>Write the answer here.</p>');
+        }
+
+        // Turns an older post's separately-stored FAQs (from before this change)
+        // into ordinary formatted paragraphs, so they land back inside the same
+        // editable area instead of needing a separate box that no longer exists.
+        function faqsToHtml(faqs) {
+            if (!Array.isArray(faqs) || !faqs.length) return '';
+            let out = '<h4>Frequently Asked Questions</h4>';
+            faqs.forEach(f => {
+                if (!f.question && !f.answer) return;
+                out += `<p><strong>${f.question || ''}</strong></p><p>${f.answer || ''}</p>`;
+            });
+            return out;
+        }
+
+        // Plain-text paste for the CTA fields too
+        ['ctaText', 'ctaLabel'].forEach(id => {
+            document.getElementById(id).addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+        });
+
+        // ---------- Form reset ----------
+        function resetForm() {
+            document.getElementById('editId').value = '';
+            document.getElementById('fTitle').value = '';
+            currentCats = [];
+            renderCatChips();
+            document.getElementById('fCatEntry').value = '';
+            hideCatSuggestions();
+            document.getElementById('manageCatPanel').style.display = 'none';
+            document.getElementById('fDek').value = '';
+            currentTags = [];
+            renderTagChips();
+            document.getElementById('fPublished').value = 'true';
+            editor.innerHTML = '';
+            document.getElementById('ctaText').textContent = '';
+            document.getElementById('ctaLabel').textContent = '';
+            document.getElementById('fCtaHref').value = '';
+            document.getElementById('formTitle').textContent = 'Write a new post';
+            document.getElementById('saveBtn').textContent = 'Publish post →';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('formMsg').className = 'msg';
+            clearImage();
+        }
+
+        // ---------- Save (insert or update) ----------
+        async function savePost() {
+            const saveBtnEl = document.getElementById('saveBtn');
+            if (saveBtnEl.disabled) return;
+            saveBtnEl.disabled = true;
+            const originalBtnText = saveBtnEl.textContent;
+            saveBtnEl.textContent = 'Saving…';
+            const done = () => { saveBtnEl.disabled = false; saveBtnEl.textContent = originalBtnText; };
+
+            const msg = document.getElementById('formMsg');
+            msg.className = 'msg'; msg.textContent = '';
+            const fail = (t) => { msg.className = 'msg error'; msg.textContent = t; done(); };
+
+            const id = document.getElementById('editId').value;
+            const title = document.getElementById('fTitle').value.trim();
+            await commitCatEntry(); // catch anything still sitting in the category box, unsubmitted
+            const cats = currentCats.slice();
+            const cat = cats[0] || ''; // kept for backward compatibility with older code/pages
+            const published = document.getElementById('fPublished').value === 'true';
+            addTagFromEntry();
+            const tags = currentTags.slice();
+
+            const html = DOMPurify.sanitize(editor.innerHTML, SAFE_HTML).trim();
+            const text = editor.innerText.trim();
+
+            if (!title || !cats.length) return fail('Title and at least one category are required.');
+            if (!text) return fail('Write something in the post first.');
+
+            let dek = document.getElementById('fDek').value.trim();
+            if (!dek) dek = text.replace(/\s+/g, ' ').slice(0, 160) + (text.length > 160 ? '…' : '');
+
+            // FAQs are now written straight into the post body (via the + FAQ
+            // button), so nothing separate is collected here — kept as an
+            // empty array purely so the column still gets a valid value.
+            const faqs = [];
+            const img_url = document.getElementById('fImgUrl').value.trim();
+            const cta_text = document.getElementById('ctaText').textContent.trim();
+            const cta_label = document.getElementById('ctaLabel').textContent.trim();
+            const cta_href = normalizeCtaHref(document.getElementById('fCtaHref').value);
+
+            const record = {
+                title, cat, cats, dek, tags, faqs, published, img_url,
+                read_mins: Math.max(1, Math.round(text.split(/\s+/).length / 200)),
+                cta_text, cta_label, cta_href,
+                body: [{ html }]
+            };
+
+            let error;
+            if (id) {
+                // Editing — slug and author are left untouched on purpose.
+                ({ error } = await sb.from('posts').update(record).eq('id', id));
+            } else {
+                record.author_id = currentUser.id;
+                record.icon = 'network'; // no longer chosen — kept only in case the column requires a value
+                let baseSlug = slugify(title) || 'post';
+                record.slug = baseSlug;
+                ({ error } = await sb.from('posts').insert(record));
+                if (error && error.message.includes('duplicate')) {
+                    record.slug = baseSlug + '-' + Math.random().toString(36).slice(2, 6);
+                    ({ error } = await sb.from('posts').insert(record));
+                }
+            }
+
+            if (error) return fail(error.message);
+
+            done();
+            msg.className = 'msg ok';
+            msg.textContent = id ? 'Post updated.' : 'Post published.';
+            resetForm();
+            loadPosts();
+            if (currentUser.role === 'admin') loadBloggers();
+        }
+
+        // ---------- Bloggers panel (admin only) ----------
+        async function loadBloggers() {
+            const listEl = document.getElementById('bloggerList');
+
+            const { data, error } = await sb
+                .from('profiles')
+                .select('id, display_name, email, role, posts(count)')
+                .order('display_name', { ascending: true });
+
+            if (error) {
+                listEl.innerHTML = `<div class="empty-note">Couldn't load bloggers: ${error.message}</div>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                listEl.innerHTML = `<div class="empty-note">No users yet.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            data.forEach(person => {
+                const count = person.posts?.[0]?.count ?? 0;
+                const row = document.createElement('div');
+                row.className = 'blogger-row' + (bloggerFilterId === person.id ? ' active' : '');
+                row.onclick = () => filterByBlogger(person.id);
+                row.innerHTML = `
+          <div class="who">
+            <div class="name">${person.display_name || person.email}${person.role === 'admin' ? ' <span class="role-pill admin" style="margin-left:6px;">Admin</span>' : ''}</div>
+            <div class="email">${person.email}</div>
+          </div>
+          <div class="count">${count} post${count === 1 ? '' : 's'}</div>
+        `;
+                listEl.appendChild(row);
+            });
+        }
+
+        function filterByBlogger(id) {
+            bloggerFilterId = (bloggerFilterId === id) ? null : id;
+            document.getElementById('clearFilterBtn').style.display = bloggerFilterId ? 'inline-flex' : 'none';
+            loadBloggers();
+            loadPosts();
+        }
+
+        function clearBloggerFilter() {
+            bloggerFilterId = null;
+            document.getElementById('clearFilterBtn').style.display = 'none';
+            loadBloggers();
+            loadPosts();
+        }
+
+        // ---------- Load + list posts ----------
+        async function loadPosts() {
+            const listEl = document.getElementById('postList');
+            const isAdmin = currentUser.role === 'admin';
+
+            let query = sb.from('posts')
+                .select(isAdmin ? '*, author:profiles(display_name, email)' : '*')
+                .order('created_at', { ascending: false });
+
+            if (isAdmin && bloggerFilterId) {
+                query = query.eq('author_id', bloggerFilterId);
+            } else if (!isAdmin) {
+                query = query.eq('author_id', currentUser.id);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                listEl.innerHTML = `<div class="empty-note">Couldn't load posts: ${error.message}</div>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                listEl.innerHTML = `<div class="empty-note">No posts yet — write your first one above.</div>`;
+                return;
+            }
+
+            listEl.innerHTML = '';
+            loadedPosts = {};
+            data.forEach(post => {
+                loadedPosts[post.id] = post;
+
+                const row = document.createElement('div');
+                row.className = 'post-row';
+                const authorLine = (isAdmin && post.author)
+                    ? ` · <span class="author">${post.author.display_name || post.author.email}</span>`
+                    : '';
+                const tagPills = (post.tags && post.tags.length)
+                    ? `<div class="tag-pills">${post.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>`
+                    : '';
+                row.innerHTML = `
+        <div class="post-row-main">
+          <span class="cat">${(Array.isArray(post.cats) && post.cats.length ? post.cats.join(' · ') : post.cat)} · <span class="status-pill ${post.published ? 'pub' : 'draft'}">${post.published ? 'Published' : 'Draft'}</span>${authorLine}</span>
+          <h4>${post.title}</h4>
+          <span class="slug mono" style="font-size:11px;color:var(--ink-dimmer);">post?slug=${post.slug}</span>
+          ${tagPills}
+        </div>
+        <div class="post-row-actions">
+          <button class="btn-ghost" onclick="editPostById('${post.id}')">Edit</button>
+          <button class="btn-danger" onclick="deletePost('${post.id}')">Delete</button>
+        </div>
+      `;
+                listEl.appendChild(row);
+            });
+        }
+
+        // Looks the clicked post up from memory (by its plain, safe UUID)
+        // instead of ever having to pass its data through an HTML attribute.
+        function editPostById(id) {
+            const post = loadedPosts[id];
+            if (!post) {
+                alert("Couldn't find that post — try refreshing the page.");
+                return;
+            }
+            editPost(post);
+        }
+
+        function editPost(post) {
+            document.getElementById('editId').value = post.id;
+            document.getElementById('fTitle').value = post.title;
+            currentCats = (Array.isArray(post.cats) && post.cats.length) ? post.cats.slice() : (post.cat ? [post.cat] : []);
+            renderCatChips();
+            document.getElementById('fDek').value = post.dek || '';
+            currentTags = Array.isArray(post.tags) ? post.tags.slice() : [];
+            renderTagChips();
+            document.getElementById('fPublished').value = String(post.published);
+
+            setCoverPreview(post.img_url || '');
+
+            // Older posts kept FAQs in their own column — fold them into the
+            // same editable area now, right after the main content, since
+            // there's no separate FAQ box to show them in anymore.
+            const bodyHtml = blocksToHtml(post.body) + faqsToHtml(post.faqs);
+            editor.innerHTML = DOMPurify.sanitize(bodyHtml, SAFE_HTML);
+
+            document.getElementById('ctaText').textContent = post.cta_text || '';
+            document.getElementById('ctaLabel').textContent = post.cta_label || '';
+            document.getElementById('fCtaHref').value = post.cta_href || '';
+
+            document.getElementById('formTitle').textContent = 'Editing: ' + post.title;
+            document.getElementById('saveBtn').textContent = 'Save changes →';
+            document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deletePost(id) {
+            if (!confirm('Delete this post permanently? This cannot be undone.')) return;
+            const { error } = await sb.from('posts').delete().eq('id', id);
+            if (error) { alert('Could not delete: ' + error.message); return; }
+            loadPosts();
+            if (currentUser.role === 'admin') loadBloggers();
+        }
+
+        // ---------- Boot ----------
+        checkSession();
+    </script>
+
+</body>
+
+</html>
